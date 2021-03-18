@@ -45,8 +45,8 @@ public class StockDataSetIterator implements DataSetIterator {
     /** adjusted stock dataset for testing */
     private List<Pair<INDArray, INDArray>> test;
 
-    public StockDataSetIterator (String filename, String symbol, int miniBatchSize, int exampleLength, double splitRatio, PriceCategory category) {
-        List<StockData> stockDataList = readStockDataFromFile(filename, symbol);
+    public StockDataSetIterator (String filename, String ticker, int miniBatchSize, int exampleLength, double splitRatio, PriceCategory category) {
+        List<StockData> stockDataList = readStockDataFromFile(filename, ticker);
         this.miniBatchSize = miniBatchSize;
         this.exampleLength = exampleLength;
         this.category = category;
@@ -194,7 +194,7 @@ public class StockDataSetIterator implements DataSetIterator {
     	return test;
     }
 
-	private List<StockData> readStockDataFromFile (String filename, String symbol) {
+	private List<StockData> readStockDataFromFile (String filename, String ticker) {
         List<StockData> stockDataList = new ArrayList<>();
         try {
             for (int i = 0; i < maxArray.length; i++) { // initialize max and min arrays
@@ -203,14 +203,14 @@ public class StockDataSetIterator implements DataSetIterator {
             }
             List<String[]> list = new CSVReader(new FileReader(filename)).readAll(); // load all elements in a list
             for (String[] arr : list) {
-                if (!arr[1].equals(symbol)) continue;
+                if (!arr[0].equals(ticker)) continue;
                 double[] nums = new double[VECTOR_SIZE];
-                for (int i = 0; i < arr.length - 2; i++) {
-                    nums[i] = Double.valueOf(arr[i + 2]);
+                for (int i = 0; i < arr.length - 4; i++) {
+                    nums[i] = Double.valueOf(arr[i + 4]);
                     if (nums[i] > maxArray[i]) maxArray[i] = nums[i];
                     if (nums[i] < minArray[i]) minArray[i] = nums[i];
                 }
-                stockDataList.add(new StockData(arr[0], arr[1], nums[0], nums[1], nums[2], nums[3], nums[4]));
+                stockDataList.add(new StockData(arr[0], arr[1], arr[2], arr[3], nums[0], nums[1], nums[2], nums[3], nums[4]));
             }
         } catch (IOException e) {
             e.printStackTrace();

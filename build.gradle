@@ -4,19 +4,20 @@
 
 plugins {
     id 'java'
-    id 'maven-publish'
+    id 'com.github.johnrengelman.shadow' version '6.1.0'
+    id 'org.openjfx.javafxplugin' version '0.0.9'
 }
 
 repositories {
-    mavenLocal()
-    maven {
-        url = uri('https://repo.maven.apache.org/maven2/')
-    }
+    mavenCentral()
 }
+
+project.configurations.implementation.canBeResolved = true
 
 dependencies {
     implementation 'org.nd4j:nd4j-api:0.9.1'
     implementation 'org.nd4j:nd4j-native:0.9.1'
+    implementation 'org.nd4j:nd4j-native-platform:0.9.1'
     implementation 'org.deeplearning4j:deeplearning4j-core:0.9.1'
     implementation 'org.datavec:datavec-api:0.9.1'
     implementation 'org.datavec:datavec-dataframe:0.9.1'
@@ -32,15 +33,28 @@ dependencies {
 group = 'com.isaac.stock'
 version = '1.0-SNAPSHOT'
 description = 'StockPrediction'
-java.sourceCompatibility = JavaVersion.VERSION_1_8
+java.sourceCompatibility = JavaVersion.VERSION_15
+java.targetCompatibility = JavaVersion.VERSION_15
 
-publishing {
-    publications {
-        maven(MavenPublication) {
-            from(components.java)
-        }
+jar {
+    zip64=true
+    manifest {
+        attributes "Main-Class": "com.isaac.stock.predict.StockPricePrediction"
     }
 }
+
+shadowJar {
+    zip64=true
+    manifest {
+        attributes "Main-Class": "com.isaac.stock.predict.StockPricePrediction"
+    }
+}
+
+javafx {
+    version = java.sourceCompatibility
+    modules = [ 'javafx.controls', 'javafx.fxml']
+}
+
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'

@@ -15,24 +15,24 @@ public class DataPreview {
     public static void main (String[] args) throws IOException {
         SparkSession spark = SparkSession.builder().master("local").appName("DataProcess").getOrCreate();
         String filename = "prices-split-adjusted.csv";
-        String symbol = "GOOG";
+        String ticker = "GOOG";
         // load data from csv file
         Dataset<Row> data = spark.read().format("csv").option("header", true)
                 .load(new ClassPathResource(filename).getFile().getAbsolutePath())
-                //.filter(functions.col("symbol").equalTo(symbol))
-                //.drop("date").drop("symbol")
+                //.filter(functions.col("ticker").equalTo(ticker))
+                //.drop("date").drop("ticker")
                 .withColumn("openPrice", functions.col("open").cast("double")).drop("open")
                 .withColumn("closePrice", functions.col("close").cast("double")).drop("close")
                 .withColumn("lowPrice", functions.col("low").cast("double")).drop("low")
                 .withColumn("highPrice", functions.col("high").cast("double")).drop("high")
                 .withColumn("volumeTmp", functions.col("volume").cast("double")).drop("volume")
-                .toDF("date", "symbol", "open", "close", "low", "high", "volume");
+                .toDF("date", "ticker", "open", "close", "low", "high", "volume");
 
         data.show();
 
-        Dataset<Row> symbols = data.select("date", "symbol").groupBy("symbol").agg(functions.count("date").as("count"));
-        System.out.println("Number of Symbols: " + symbols.count());
-        symbols.show();
+        Dataset<Row> tickers = data.select("date", "ticker").groupBy("ticker").agg(functions.count("date").as("count"));
+        System.out.println("Number of tickers: " + tickers.count());
+        tickers.show();
 
         VectorAssembler assembler = new VectorAssembler()
                 .setInputCols(new String[] {"open", "low", "high", "volume", "close"})

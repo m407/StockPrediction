@@ -5,8 +5,10 @@ package com.isaac.stock.representation;
  * @author ZHANG HAO
  */
 public class StockData {
+    private String ticker; // stock name
+    private String per; // stock period D/60/10
     private String date; // date
-    private String symbol; // stock name
+    private String time; // time
 
     private double open; // open price
     private double close; // close price
@@ -16,9 +18,12 @@ public class StockData {
 
     public StockData () {}
 
-    public StockData (String date, String symbol, double open, double close, double low, double high, double volume) {
+    public StockData (String ticker, String per, String date,  String time, double open, double close, double low, double high, double volume) {
+        this.ticker = date;
+        this.per = per;
         this.date = date;
-        this.symbol = symbol;
+        this.time  = time;
+
         this.open = open;
         this.close = close;
         this.low = low;
@@ -29,8 +34,8 @@ public class StockData {
     public String getDate() { return date; }
     public void setDate(String date) { this.date = date; }
 
-    public String getSymbol() { return symbol; }
-    public void setSymbol(String symbol) { this.symbol = symbol; }
+    public String getticker() { return ticker; }
+    public void setticker(String ticker) { this.ticker = ticker; }
 
     public double getOpen() { return open; }
     public void setOpen(double open) { this.open = open; }

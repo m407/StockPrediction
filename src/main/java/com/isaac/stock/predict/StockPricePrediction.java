@@ -9,7 +9,6 @@ import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
-import org.nd4j.linalg.io.ClassPathResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,45 +29,47 @@ public class StockPricePrediction {
     private static int exampleLength = 22; // time series length, assume 22 working days per month
 
     public static void main (String[] args) throws IOException {
-        String file = new ClassPathResource("prices-split-adjusted.csv").getFile().getAbsolutePath();
-        String symbol = "GOOG"; // stock name
-        int batchSize = 64; // mini-batch size
-        double splitRatio = 0.9; // 90% for training, 10% for testing
-        int epochs = 100; // training epochs
+        String fileName = System.getProperty("prices.file", "RI.RTSI.csv");
+        String ticker = System.getProperty("prices.ticker", "RI.RTSI");
+        String file = new File(fileName).getAbsolutePath();
+        int batchSize = 256; // mini-batch size
+        double splitRatio = 0.85; // 85% for training, 15% for testing
+        int epochs = 256; // training epochs
 
         log.info("Create dataSet iterator...");
-        PriceCategory category = PriceCategory.CLOSE; // CLOSE: predict close price
-        StockDataSetIterator iterator = new StockDataSetIterator(file, symbol, batchSize, exampleLength, splitRatio, category);
+        PriceCategory category = PriceCategory.ALL; // CLOSE: predict close price
+        StockDataSetIterator iterator = new StockDataSetIterator(file, ticker, batchSize, exampleLength, splitRatio, category);
         log.info("Load test dataset...");
         List<Pair<INDArray, INDArray>> test = iterator.getTestDataSet();
 
         log.info("Build lstm networks...");
         MultiLayerNetwork net = RecurrentNets.buildLstmNetworks(iterator.inputColumns(), iterator.totalOutcomes());
 
-        log.info("Training...");
-        for (int i = 0; i < epochs; i++) {
-            while (iterator.hasNext()) net.fit(iterator.next()); // fit model using mini-batch data
-            iterator.reset(); // reset iterator
-            net.rnnClearPreviousState(); // clear previous state
-        }
+        File locationToSave = new File("StockPriceLSTM_" + ticker + "_" + category+".zip");
 
-        log.info("Saving model...");
-        File locationToSave = new File("src/main/resources/StockPriceLSTM_".concat(String.valueOf(category)).concat(".zip"));
-        // saveUpdater: i.e., the state for Momentum, RMSProp, Adagrad etc. Save this to train your network more in the future
-        ModelSerializer.writeModel(net, locationToSave, true);
-
-        log.info("Load model...");
-        net = ModelSerializer.restoreMultiLayerNetwork(locationToSave);
-
-        log.info("Testing...");
-        if (category.equals(PriceCategory.ALL)) {
-            INDArray max = Nd4j.create(iterator.getMaxArray());
-            INDArray min = Nd4j.create(iterator.getMinArray());
-            predictAllCategories(net, test, max, min);
+        if(locationToSave.isFile() && locationToSave.exists()) {
+            log.info("Load model...");
+            net = ModelSerializer.restoreMultiLayerNetwork(locationToSave);
+            log.info("Testing...");
+            if (category.equals(PriceCategory.ALL)) {
+                INDArray max = Nd4j.create(iterator.getMaxArray());
+                INDArray min = Nd4j.create(iterator.getMinArray());
+                predictAllCategories(net, test, max, min);
+            } else {
+                double max = iterator.getMaxNum(category);
+                double min = iterator.getMinNum(category);
+                predictPriceOneAhead(net, test, max, min, category);
+            }
         } else {
-            double max = iterator.getMaxNum(category);
-            double min = iterator.getMinNum(category);
-            predictPriceOneAhead(net, test, max, min, category);
+            // saveUpdater: i.e., the state for Momentum, RMSProp, Adagrad etc. Save this to train your network more in the future
+            log.info("Training...");
+            for (int i = 0; i < epochs; i++) {
+                while (iterator.hasNext()) net.fit(iterator.next()); // fit model using mini-batch data
+                iterator.reset(); // reset iterator
+                net.rnnClearPreviousState(); // clear previous state
+            }
+            log.info("Saving model...");
+            ModelSerializer.writeModel(net, locationToSave, true);
         }
         log.info("Done...");
     }
