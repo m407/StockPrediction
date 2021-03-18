@@ -45,7 +45,8 @@ public class StockPricePrediction {
         log.info("Build lstm networks...");
         MultiLayerNetwork net = RecurrentNets.buildLstmNetworks(iterator.inputColumns(), iterator.totalOutcomes());
 
-        File locationToSave = new File("StockPriceLSTM_" + ticker + "_" + category+".zip");
+        String multiLayerNetworkFileName = System.getProperty("network.file", "StockPriceLSTM_" + ticker + "_" + category);
+        File locationToSave = new File(multiLayerNetworkFileName+".zip");
 
         if(locationToSave.isFile() && locationToSave.exists()) {
             log.info("Load model...");
