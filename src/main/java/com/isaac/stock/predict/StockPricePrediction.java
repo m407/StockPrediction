@@ -26,15 +26,15 @@ public class StockPricePrediction {
 
     private static final Logger log = LoggerFactory.getLogger(StockPricePrediction.class);
 
-    private static int exampleLength = 22; // time series length, assume 22 working days per month
+    private static int exampleLength = 66; // time series length, assume 66 working days in 3 months
 
     public static void main (String[] args) throws IOException {
         String fileName = System.getProperty("prices.file", "RI.RTSI.csv");
         String ticker = System.getProperty("prices.ticker", "RI.RTSI");
         String file = new File(fileName).getAbsolutePath();
-        int batchSize = 256; // mini-batch size
+        int batchSize = Integer.parseInt(System.getProperty("batchSize", "92")); // mini-batch size
         double splitRatio = 0.85; // 85% for training, 15% for testing
-        int epochs = 256; // training epochs
+        int epochs = Integer.parseInt(System.getProperty("epochs", "1024"));; // training epochs
 
         log.info("Create dataSet iterator...");
         PriceCategory category = PriceCategory.ALL; // CLOSE: predict close price
