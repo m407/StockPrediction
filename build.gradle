@@ -24,10 +24,11 @@ dependencies {
     implementation 'org.apache.spark:spark-sql_2.10:2.1.0'
     implementation 'org.apache.spark:spark-mllib_2.10:2.1.0'
     implementation 'org.apache.spark:spark-core_2.10:2.1.0'
-    implementation 'com.opencsv:opencsv:3.9'
     implementation 'org.slf4j:slf4j-simple:1.7.21'
     implementation 'org.jfree:jfreechart:1.0.19'
     implementation 'com.google.guava:guava:23.0'
+
+    implementation 'org.postgresql:postgresql:42.2.19'
 }
 
 group = 'com.isaac.stock'

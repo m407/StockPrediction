@@ -1,54 +1,37 @@
 package com.isaac.stock.representation;
 
+import java.sql.Time;
+import java.sql.Date;
+
+import static com.isaac.stock.representation.StockDataSetIterator.*;
+
 /**
  * Created by zhanghao on 26/7/17.
+ *
  * @author ZHANG HAO
  */
 public class StockData {
-    private String ticker; // stock name
-    private String per; // stock period D/60/10
-    private String date; // date
-    private String time; // time
+  private String ticker; // stock name
+  private String per; // stock period D/60/10
+  private Date date; // date
+  private Time time; // time
 
-    private double open; // open price
-    private double close; // close price
-    private double low; // low price
-    private double high; // high price
-    private double volume; // volume
 
-    public StockData () {}
+  public double[] getData() {
+    return data;
+  }
 
-    public StockData (String ticker, String per, String date,  String time, double open, double close, double low, double high, double volume) {
-        this.ticker = date;
-        this.per = per;
-        this.date = date;
-        this.time  = time;
+  private double[] data = new double[VECTOR_SIZE];
 
-        this.open = open;
-        this.close = close;
-        this.low = low;
-        this.high = high;
-        this.volume = volume;
-    }
+  public StockData() {
+  }
 
-    public String getDate() { return date; }
-    public void setDate(String date) { this.date = date; }
+  public StockData(String ticker, String per, Date date, Time time, double[] data) {
+    this.ticker = ticker;
+    this.per = per;
+    this.date = date;
+    this.time = time;
 
-    public String getticker() { return ticker; }
-    public void setticker(String ticker) { this.ticker = ticker; }
-
-    public double getOpen() { return open; }
-    public void setOpen(double open) { this.open = open; }
-
-    public double getClose() { return close; }
-    public void setClose(double close) { this.close = close; }
-
-    public double getLow() { return low; }
-    public void setLow(double low) { this.low = low; }
-
-    public double getHigh() { return high; }
-    public void setHigh(double high) { this.high = high; }
-
-    public double getVolume() { return volume; }
-    public void setVolume(double volume) { this.volume = volume; }
+    this.data = data;
+  }
 }

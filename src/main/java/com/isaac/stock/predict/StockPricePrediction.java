@@ -1,7 +1,6 @@
 package com.isaac.stock.predict;
 
 import com.isaac.stock.model.RecurrentNets;
-import com.isaac.stock.representation.PriceCategory;
 import com.isaac.stock.representation.StockDataSetIterator;
 import com.isaac.stock.utils.PlotUtil;
 import javafx.util.Pair;
@@ -29,38 +28,30 @@ public class StockPricePrediction {
     private static int exampleLength = 66; // time series length, assume 66 working days in 3 months
 
     public static void main (String[] args) throws IOException {
-        String fileName = System.getProperty("prices.file", "RI.RTSI.csv");
+        String connectionString = System.getProperty("prices.connection", "jdbc:postgresql://localhost:5432/stock_prices");
         String ticker = System.getProperty("prices.ticker", "RI.RTSI");
-        String file = new File(fileName).getAbsolutePath();
         int batchSize = Integer.parseInt(System.getProperty("batchSize", "92")); // mini-batch size
         double splitRatio = 0.85; // 85% for training, 15% for testing
         int epochs = Integer.parseInt(System.getProperty("epochs", "1024"));; // training epochs
 
         log.info("Create dataSet iterator...");
-        PriceCategory category = PriceCategory.ALL; // CLOSE: predict close price
-        StockDataSetIterator iterator = new StockDataSetIterator(file, ticker, batchSize, exampleLength, splitRatio, category);
+        StockDataSetIterator iterator = new StockDataSetIterator(connectionString, ticker, batchSize, exampleLength, splitRatio);
         log.info("Load test dataset...");
         List<Pair<INDArray, INDArray>> test = iterator.getTestDataSet();
 
         log.info("Build lstm networks...");
         MultiLayerNetwork net = RecurrentNets.buildLstmNetworks(iterator.inputColumns(), iterator.totalOutcomes());
 
-        String multiLayerNetworkFileName = System.getProperty("network.file", "StockPriceLSTM_" + ticker + "_" + category);
+        String multiLayerNetworkFileName = System.getProperty("network.file", "StockPriceLSTM_" + ticker);
         File locationToSave = new File(multiLayerNetworkFileName+".zip");
 
         if(locationToSave.isFile() && locationToSave.exists()) {
             log.info("Load model...");
             net = ModelSerializer.restoreMultiLayerNetwork(locationToSave);
             log.info("Testing...");
-            if (category.equals(PriceCategory.ALL)) {
                 INDArray max = Nd4j.create(iterator.getMaxArray());
                 INDArray min = Nd4j.create(iterator.getMinArray());
                 predictAllCategories(net, test, max, min);
-            } else {
-                double max = iterator.getMaxNum(category);
-                double min = iterator.getMinNum(category);
-                predictPriceOneAhead(net, test, max, min, category);
-            }
         } else {
             // saveUpdater: i.e., the state for Momentum, RMSProp, Adagrad etc. Save this to train your network more in the future
             log.info("Training...");
@@ -75,25 +66,6 @@ public class StockPricePrediction {
         log.info("Done...");
     }
 
-    /** Predict one feature of a stock one-day ahead */
-    private static void predictPriceOneAhead (MultiLayerNetwork net, List<Pair<INDArray, INDArray>> testData, double max, double min, PriceCategory category) {
-        double[] predicts = new double[testData.size()];
-        double[] actuals = new double[testData.size()];
-        for (int i = 0; i < testData.size(); i++) {
-            predicts[i] = net.rnnTimeStep(testData.get(i).getKey()).getDouble(exampleLength - 1) * (max - min) + min;
-            actuals[i] = testData.get(i).getValue().getDouble(0);
-        }
-        log.info("Print out Predictions and Actual Values...");
-        log.info("Predict,Actual");
-        for (int i = 0; i < predicts.length; i++) log.info(predicts[i] + "," + actuals[i]);
-        log.info("Plot...");
-        PlotUtil.plot(predicts, actuals, String.valueOf(category));
-    }
-
-    private static void predictPriceMultiple (MultiLayerNetwork net, List<Pair<INDArray, INDArray>> testData, double max, double min) {
-        // TODO
-    }
-
     /** Predict all the features (open, close, low, high prices and volume) of a stock one-day ahead */
     private static void predictAllCategories (MultiLayerNetwork net, List<Pair<INDArray, INDArray>> testData, INDArray max, INDArray min) {
         INDArray[] predicts = new INDArray[testData.size()];
@@ -106,7 +78,7 @@ public class StockPricePrediction {
         log.info("Predict\tActual");
         for (int i = 0; i < predicts.length; i++) log.info(predicts[i] + "\t" + actuals[i]);
         log.info("Plot...");
-        for (int n = 0; n < 5; n++) {
+        for (int n = 0; n < 4; n++) {
             double[] pred = new double[predicts.length];
             double[] actu = new double[actuals.length];
             for (int i = 0; i < predicts.length; i++) {
@@ -119,7 +91,6 @@ public class StockPricePrediction {
                 case 1: name = "Stock CLOSE Price"; break;
                 case 2: name = "Stock LOW Price"; break;
                 case 3: name = "Stock HIGH Price"; break;
-                case 4: name = "Stock VOLUME Amount"; break;
                 default: throw new NoSuchElementException();
             }
             PlotUtil.plot(pred, actu, name);
