@@ -49,8 +49,8 @@ public class StockPricePrediction {
             log.info("Load model...");
             net = ModelSerializer.restoreMultiLayerNetwork(locationToSave);
             log.info("Testing...");
-                INDArray max = Nd4j.create(iterator.getMaxArray());
-                INDArray min = Nd4j.create(iterator.getMinArray());
+                INDArray max = Nd4j.create(iterator.getMaxLabelArray());
+                INDArray min = Nd4j.create(iterator.getMinLabeleArray());
                 predictAllCategories(net, test, max, min);
         } else {
             // saveUpdater: i.e., the state for Momentum, RMSProp, Adagrad etc. Save this to train your network more in the future

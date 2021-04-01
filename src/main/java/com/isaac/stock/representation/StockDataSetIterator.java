@@ -1,13 +1,11 @@
 package com.isaac.stock.representation;
 
-import com.google.common.collect.ImmutableMap;
 import javafx.util.Pair;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.api.DataSetPreProcessor;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.factory.Nd4j;
-import org.postgresql.Driver;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -23,7 +21,7 @@ import java.util.*;
  */
 public class StockDataSetIterator implements DataSetIterator {
 
-  public static final int VECTOR_SIZE = 26; // number of features for a stock data
+  public static final int VECTOR_SIZE = 22; // number of features for a stock data
   public static final int OUT_VECTOR_SIZE = 4; // number of features to predict
   private int miniBatchSize; // mini-batch size
   private int exampleLength = 22; // default 22, say, 22 working days per month
@@ -77,12 +75,12 @@ public class StockDataSetIterator implements DataSetIterator {
     return test;
   }
 
-  public double[] getMaxArray() {
-    return maxArray;
+  public double[] getMaxLabelArray() {
+    return Arrays.copyOfRange(maxArray, 0, OUT_VECTOR_SIZE);
   }
 
-  public double[] getMinArray() {
-    return minArray;
+  public double[] getMinLabeleArray() {
+    return Arrays.copyOfRange(minArray, 0, OUT_VECTOR_SIZE);
   }
 
   @Override
@@ -90,9 +88,7 @@ public class StockDataSetIterator implements DataSetIterator {
     if (exampleStartOffsets.size() == 0) throw new NoSuchElementException();
     int actualMiniBatchSize = Math.min(num, exampleStartOffsets.size());
     INDArray input = Nd4j.create(new int[]{actualMiniBatchSize, VECTOR_SIZE, exampleLength}, 'f');
-    INDArray label;
-
-    label = Nd4j.create(new int[]{actualMiniBatchSize, OUT_VECTOR_SIZE, exampleLength}, 'f');
+    INDArray label = Nd4j.create(new int[]{actualMiniBatchSize, OUT_VECTOR_SIZE, exampleLength}, 'f');
 
     for (int index = 0; index < actualMiniBatchSize; index++) {
       int startIdx = exampleStartOffsets.removeFirst();
@@ -102,12 +98,12 @@ public class StockDataSetIterator implements DataSetIterator {
       for (int i = startIdx; i < endIdx; i++) {
         int c = i - startIdx;
         for (int e = 0; e < VECTOR_SIZE; e++) {
-          input.putScalar(new int[]{index, e, c}, (curData.getData()[e] - minArray[0]) / (maxArray[0] - minArray[0]));
+          input.putScalar(new int[]{index, e, c}, (curData.getData()[e] - minArray[e]) / (maxArray[e] - minArray[e]));
         }
         nextData = train.get(i + 1);
 
         for (int e = 0; e < OUT_VECTOR_SIZE; e++) {
-          label.putScalar(new int[]{index, e, c}, (nextData.getData()[e] - minArray[1]) / (maxArray[1] - minArray[1]));
+          label.putScalar(new int[]{index, e, c}, (nextData.getData()[e] - minArray[e]) / (maxArray[e] - minArray[e]));
         }
 
         curData = nextData;
@@ -116,6 +112,30 @@ public class StockDataSetIterator implements DataSetIterator {
     }
     return new DataSet(input, label);
   }
+
+  private List<Pair<INDArray, INDArray>> generateTestDataSet(List<StockData> stockDataList) {
+    int window = exampleLength + predictLength;
+    List<Pair<INDArray, INDArray>> test = new ArrayList<>();
+    for (int index = 0; index < stockDataList.size() - window; index++) {
+      INDArray input = Nd4j.create(new int[]{exampleLength, VECTOR_SIZE}, 'f');
+      INDArray label = Nd4j.create(new int[]{OUT_VECTOR_SIZE}, 'f'); // ordering is set as 'f', faster construct
+
+      for (int j = index; j < index + exampleLength; j++) {
+        StockData stock = stockDataList.get(j);
+        for (int e = 0; e < VECTOR_SIZE; e++) {
+          input.putScalar(new int[]{j - index, e}, (stock.getData()[e] - minArray[e]) / (maxArray[e] - minArray[e]));
+        }
+      }
+      StockData stock = stockDataList.get(index + exampleLength);
+      for (int e = 0; e < OUT_VECTOR_SIZE; e++) {
+        label.putScalar(new int[]{e}, stock.getData()[e]);
+      }
+
+      test.add(new Pair<>(input, label));
+    }
+    return test;
+  }
+
 
   @Override
   public int totalExamples() {
@@ -185,30 +205,6 @@ public class StockDataSetIterator implements DataSetIterator {
   @Override
   public DataSet next() {
     return next(miniBatchSize);
-  }
-
-  private List<Pair<INDArray, INDArray>> generateTestDataSet(List<StockData> stockDataList) {
-    int window = exampleLength + predictLength;
-    List<Pair<INDArray, INDArray>> test = new ArrayList<>();
-    for (int i = 0; i < stockDataList.size() - window; i++) {
-      INDArray input = Nd4j.create(new int[]{exampleLength, VECTOR_SIZE}, 'f');
-      for (int j = i; j < i + exampleLength; j++) {
-        StockData stock = stockDataList.get(j);
-        for (int e = 0; e < VECTOR_SIZE; e++) {
-          input.putScalar(new int[]{j - i, e}, (stock.getData()[e] - minArray[0]) / (maxArray[0] - minArray[0]));
-        }
-      }
-      StockData stock = stockDataList.get(i + exampleLength);
-      INDArray label;
-
-      label = Nd4j.create(new int[]{OUT_VECTOR_SIZE}, 'f'); // ordering is set as 'f', faster construct
-      for (int e = 0; e < OUT_VECTOR_SIZE; e++) {
-        label.putScalar(new int[]{e}, stock.getData()[e]);
-      }
-
-      test.add(new Pair<>(input, label));
-    }
-    return test;
   }
 
   private List<StockData> readStockDataFromDatabase(String connectionString, String ticker) {
