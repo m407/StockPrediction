@@ -13,8 +13,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 /**
  * Created by zhanghao on 26/7/17.
@@ -51,7 +51,7 @@ public class StockPricePrediction {
             log.info("Testing...");
                 INDArray max = Nd4j.create(iterator.getMaxLabelArray());
                 INDArray min = Nd4j.create(iterator.getMinLabeleArray());
-                predictAllCategories(net, test, max, min);
+            predictAllCategories(net, test, max, min, ticker, iterator.getLastDate().plusDays(1));
         } else {
             // saveUpdater: i.e., the state for Momentum, RMSProp, Adagrad etc. Save this to train your network more in the future
             log.info("Training...");
@@ -66,8 +66,10 @@ public class StockPricePrediction {
         log.info("Done...");
     }
 
-    /** Predict all the features (open, close, low, high prices and volume) of a stock one-day ahead */
-    private static void predictAllCategories (MultiLayerNetwork net, List<Pair<INDArray, INDArray>> testData, INDArray max, INDArray min) {
+    /**
+     * Predict all the features (open, close, low, high prices and volume) of a stock one-day ahead
+     */
+    private static void predictAllCategories(MultiLayerNetwork net, List<Pair<INDArray, INDArray>> testData, INDArray max, INDArray min, String ticker, LocalDateTime startDate) {
         INDArray[] predicts = new INDArray[testData.size()];
         INDArray[] actuals = new INDArray[testData.size()];
         for (int i = 0; i < testData.size(); i++) {
@@ -78,23 +80,7 @@ public class StockPricePrediction {
         log.info("Predict\tActual");
         for (int i = 0; i < predicts.length; i++) log.info(predicts[i] + "\t" + actuals[i]);
         log.info("Plot...");
-        for (int n = 0; n < 4; n++) {
-            double[] pred = new double[predicts.length];
-            double[] actu = new double[actuals.length];
-            for (int i = 0; i < predicts.length; i++) {
-                pred[i] = predicts[i].getDouble(n);
-                actu[i] = actuals[i].getDouble(n);
-            }
-            String name;
-            switch (n) {
-                case 0: name = "Stock OPEN Price"; break;
-                case 1: name = "Stock CLOSE Price"; break;
-                case 2: name = "Stock LOW Price"; break;
-                case 3: name = "Stock HIGH Price"; break;
-                default: throw new NoSuchElementException();
-            }
-            PlotUtil.plot(pred, actu, name);
-        }
+        PlotUtil.plot(predicts, actuals, ticker, startDate);
     }
 
 }

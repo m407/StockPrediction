@@ -3,81 +3,109 @@ package com.isaac.stock.utils;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.axis.NumberAxis;
-import org.jfree.chart.axis.NumberTickUnit;
-import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.data.xy.XYSeries;
-import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.chart.renderer.xy.XYItemRenderer;
+import org.jfree.chart.ui.ApplicationFrame;
+import org.jfree.data.time.Day;
+import org.jfree.data.time.Hour;
+import org.jfree.data.time.ohlc.OHLCSeries;
+import org.jfree.data.time.ohlc.OHLCSeriesCollection;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.ta4j.core.Bar;
+import org.ta4j.core.BarSeries;
+import org.ta4j.core.Indicator;
+import org.ta4j.core.num.Num;
 
-import javax.swing.*;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.util.Date;
 
 /**
  * Created by zhanghao on 26/7/17.
  * Modified by zhanghao on 28/9/17.
+ *
  * @author ZHANG HAO
  */
 public class PlotUtil {
+  /**
+   * Builds a JFreeChart time series from a Ta4j bar series and an indicator.
+   *
+   * @param barSeries the ta4j bar series
+   * @param indicator the indicator
+   * @param name      the name of the chart time series
+   * @return the JFreeChart time series
+   */
+  private static org.jfree.data.time.TimeSeries buildChartBarSeries(BarSeries barSeries, Indicator<Num> indicator,
+                                                                    String name) {
+    org.jfree.data.time.TimeSeries chartTimeSeries = new org.jfree.data.time.TimeSeries(name);
+    for (int i = 0; i < barSeries.getBarCount(); i++) {
+      Bar bar = barSeries.getBar(i);
+      chartTimeSeries.add(new Day(Date.from(bar.getEndTime().toInstant())), indicator.getValue(i).doubleValue());
+    }
+    return chartTimeSeries;
+  }
 
-	public static void plot(double[] predicts, double[] actuals, String name) {
-		double[] index = new double[predicts.length];
-		for (int i = 0; i < predicts.length; i++)
-			index[i] = i;
-		int min = minValue(predicts, actuals);
-		int max = maxValue(predicts, actuals);
-		final XYSeriesCollection dataSet = new XYSeriesCollection();
-		addSeries(dataSet, index, predicts, "Predicts");
-		addSeries(dataSet, index, actuals, "Actuals");
-		final JFreeChart chart = ChartFactory.createXYLineChart(
-				"Prediction Result", // chart title
-				"Index", // x axis label
-				name, // y axis label
-				dataSet, // data
-				PlotOrientation.VERTICAL,
-				true, // include legend
-				true, // tooltips
-				false // urls
-		);
-		XYPlot xyPlot = chart.getXYPlot();
-		// X-axis
-		final NumberAxis domainAxis = (NumberAxis) xyPlot.getDomainAxis();
-		domainAxis.setRange((int) index[0], (int) (index[index.length - 1] + 2));
-		domainAxis.setTickUnit(new NumberTickUnit(20));
-		domainAxis.setVerticalTickLabels(true);
-		// Y-axis
-		final NumberAxis rangeAxis = (NumberAxis) xyPlot.getRangeAxis();
-		rangeAxis.setRange(min, max);
-		rangeAxis.setTickUnit(new NumberTickUnit(50));
-		final ChartPanel panel = new ChartPanel(chart);
-		final JFrame f = new JFrame();
-		f.add(panel);
-		f.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-		f.pack();
-		f.setVisible(true);
-	}
+  /**
+   * Displays a chart in a frame.
+   *
+   * @param chart the chart to be displayed
+   */
+  private static void displayChart(JFreeChart chart) {
+    // Chart panel
+    ChartPanel panel = new ChartPanel(chart);
+    panel.setFillZoomRectangle(true);
+    panel.setMouseWheelEnabled(true);
+    panel.setPreferredSize(new java.awt.Dimension(500, 270));
+    // Application frame
+    ApplicationFrame frame = new ApplicationFrame("Stock chart");
+    frame.setContentPane(panel);
+    frame.pack();
+    frame.setVisible(true);
+  }
 
-	private static void addSeries (final XYSeriesCollection dataSet, double[] x, double[] y, final String label){
-		final XYSeries s = new XYSeries(label);
-		for( int j = 0; j < x.length; j++ ) s.add(x[j], y[j]);
-		dataSet.addSeries(s);
-	}
+  public static void plot(INDArray[] predicts, INDArray[] actuals, String name, LocalDateTime startDate) {
+    double[] index = new double[predicts.length];
+    for (int i = 0; i < predicts.length; i++)
+      index[i] = i;
+    /*
+     * Getting bar series
+     */
+    OHLCSeries predictsSeries = new OHLCSeries(name + "_predicts");
+    OHLCSeries actualsSeries = new OHLCSeries(name + "_actuals");
+    for (int i = 0; i < predicts.length; i++) {
+      predictsSeries.add(
+              new Hour(0, startDate.plusDays(i).getDayOfMonth(), startDate.plusDays(i).getMonthValue(), startDate.plusDays(i).getYear()),
+              predicts[i].getDouble(0),
+              predicts[i].getDouble(1),
+              predicts[i].getDouble(2),
+              predicts[i].getDouble(3)
+      );
+      actualsSeries.add(
+              new Hour(6, startDate.plusDays(i).getDayOfMonth(), startDate.plusDays(i).getMonthValue(), startDate.plusDays(i).getYear()),
+              actuals[i].getDouble(0),
+              actuals[i].getDouble(1),
+              actuals[i].getDouble(2),
+              actuals[i].getDouble(3)
+      );
+    }
 
-	private static int minValue (double[] predicts, double[] actuals) {
-		double min = Integer.MAX_VALUE;
-		for (int i = 0; i < predicts.length; i++) {
-			if (min > predicts[i]) min = predicts[i];
-			if (min > actuals[i]) min = actuals[i];
-		}
-		return (int) (min * 0.98);
-	}
+    OHLCSeriesCollection dataset = new OHLCSeriesCollection();
+    dataset.addSeries(predictsSeries);
+    dataset.addSeries(actualsSeries);
 
-	private static int maxValue (double[] predicts, double[] actuals) {
-		double max = Integer.MIN_VALUE;
-		for (int i = 0; i < predicts.length; i++) {
-			if (max < predicts[i]) max = predicts[i];
-			if (max < actuals[i]) max = actuals[i];
-		}
-		return (int) (max * 1.02);
-	}
+    /*
+     * Creating the chart
+     */
+    JFreeChart jfreechart = ChartFactory.createCandlestickChart(name, "Time", "Value", dataset, true);
+    XYPlot plot = (XYPlot) jfreechart.getPlot();
+    DateAxis axis = (DateAxis) plot.getDomainAxis();
+    XYItemRenderer renderer = plot.getRenderer();
+    axis.setDateFormatOverride(new SimpleDateFormat("yyyy-MM-dd"));
 
+    /*
+     * Displaying the chart
+     */
+    displayChart(jfreechart);
+  }
 }

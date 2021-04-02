@@ -11,6 +11,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -45,6 +46,11 @@ public class StockDataSetIterator implements DataSetIterator {
    * stock dataset for training
    */
   private List<StockData> train;
+
+  public LocalDateTime getLastDate() {
+    return train.get(train.size() - 1).getDate();
+  }
+
   /**
    * adjusted stock dataset for testing
    */
@@ -228,7 +234,12 @@ public class StockDataSetIterator implements DataSetIterator {
           if (nums[i] > maxArray[i]) maxArray[i] = nums[i];
           if (nums[i] < minArray[i]) minArray[i] = nums[i];
         }
-        stockDataList.add(new StockData(rs.getString(1), rs.getString(2), rs.getDate(3), rs.getTime(4), nums));
+        stockDataList.add(new StockData(
+                rs.getString(1),
+                rs.getString(2),
+                rs.getDate(3).toLocalDate(),
+                rs.getTime(4).toLocalTime(),
+                nums));
       }
       rs.close();
       statement.close();
