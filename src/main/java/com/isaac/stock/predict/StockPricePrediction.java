@@ -33,7 +33,7 @@ public class StockPricePrediction {
     String ticker = System.getProperty("prices.ticker", "RI.RTSI");
     int batchSize = Integer.parseInt(System.getProperty("batchSize", "92")); // mini-batch size
     double splitRatio = 0.85; // 85% for training, 15% for testing
-    int epochs = Integer.parseInt(System.getProperty("epochs", "1024"));
+    int epochs = Integer.parseInt(System.getProperty("epochs", "8192"));
     ; // training epochs
 
     log.info("Create dataSet iterator...");
