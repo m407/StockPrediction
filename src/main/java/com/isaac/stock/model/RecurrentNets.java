@@ -16,26 +16,28 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 /**
  * Created by zhanghao on 26/7/17.
+ *
  * @author ZHANG HAO
  */
 public class RecurrentNets {
-	
-	private static final double learningRate = 0.05;
-	private static final int iterations = 1;
-	private static final int seed = 12345;
 
-    private static final int lstmLayer1Size = 256;
-    private static final int lstmLayer2Size = 256;
-    private static final int denseLayerSize = 32;
-    private static final double dropoutRatio = 0.2;
-    private static final int truncatedBPTTLength = 22;
+  private static final double learningRate = 0.017;
+  private static final int iterations = 1;
+  private static final int seed = 12345;
 
-    public static MultiLayerNetwork buildLstmNetworks(int nIn, int nOut) {
-        MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-                .seed(seed)
-                .iterations(iterations)
-                .learningRate(learningRate)
-                .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+  private static final int lstmLayer1Size = 320;
+  private static final int lstmLayer2Size = 296;
+  private static final int lstmLayer3Size = 256;
+  private static final int denseLayerSize = 32;
+  private static final double dropoutRatio = 0.2;
+  private static final int truncatedBPTTLength = 22;
+
+  public static MultiLayerNetwork buildLstmNetworks(int nIn, int nOut) {
+    MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+            .seed(seed)
+            .iterations(iterations)
+            .learningRate(learningRate)
+            .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                 .weightInit(WeightInit.XAVIER)
                 .updater(Updater.RMSPROP)
                 .regularization(true)
@@ -48,13 +50,20 @@ public class RecurrentNets {
                         .gateActivationFunction(Activation.HARDSIGMOID)
                         .dropOut(dropoutRatio)
                         .build())
-                .layer(1, new GravesLSTM.Builder()
-                        .nIn(lstmLayer1Size)
-                        .nOut(lstmLayer2Size)
-                        .activation(Activation.TANH)
-                        .gateActivationFunction(Activation.HARDSIGMOID)
-                        .dropOut(dropoutRatio)
-                        .build())
+            .layer(1, new GravesLSTM.Builder()
+                    .nIn(lstmLayer1Size)
+                    .nOut(lstmLayer2Size)
+                    .activation(Activation.TANH)
+                    .gateActivationFunction(Activation.HARDSIGMOID)
+                    .dropOut(dropoutRatio)
+                    .build())
+            .layer(2, new GravesLSTM.Builder()
+                    .nIn(lstmLayer2Size)
+                    .nOut(lstmLayer3Size)
+                    .activation(Activation.TANH)
+                    .gateActivationFunction(Activation.HARDSIGMOID)
+                    .dropOut(dropoutRatio)
+                    .build())
                 .layer(2, new DenseLayer.Builder()
                 		.nIn(lstmLayer2Size)
                 		.nOut(denseLayerSize)
