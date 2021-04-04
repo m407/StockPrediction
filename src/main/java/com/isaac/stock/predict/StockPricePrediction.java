@@ -31,7 +31,7 @@ public class StockPricePrediction {
   public static void main(String[] args) throws IOException {
     String connectionString = System.getProperty("prices.connection", "jdbc:postgresql://localhost:5432/stock_prices");
     String ticker = System.getProperty("prices.ticker", "RI.RTSI");
-    int batchSize = Integer.parseInt(System.getProperty("batchSize", "92")); // mini-batch size
+    int batchSize = Integer.parseInt(System.getProperty("batchSize", "256")); // mini-batch size
     double splitRatio = 0.85; // 85% for training, 15% for testing
     int epochs = Integer.parseInt(System.getProperty("epochs", "8192"));
     ; // training epochs

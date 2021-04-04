@@ -22,7 +22,7 @@ import java.util.*;
  */
 public class StockDataSetIterator implements DataSetIterator {
 
-  public static final int VECTOR_SIZE = 20; // number of features for a stock data
+  public static final int VECTOR_SIZE = 21; // number of features for a stock data
   public static final int OUT_VECTOR_SIZE = 4; // number of features to predict
   private int miniBatchSize; // mini-batch size
   private int exampleLength; // default 22, say, 22 working days per month
