@@ -32,6 +32,7 @@ public class StockPricePrediction {
     String connectionString = System.getProperty("prices.connection", "jdbc:postgresql://localhost:5432/stock_prices");
     String ticker = System.getProperty("prices.ticker", "RI.RTSI");
     int iterations = Integer.parseInt(System.getProperty("iterations", "1"));
+    int lstmLayer1Size = Integer.parseInt(System.getProperty("lstmLayer1Size", "256"));
     int batchSize = Integer.parseInt(System.getProperty("batchSize", "86")); // mini-batch size
     double splitRatio = 0.85; // 85% for training, 15% for testing
     int epochs = Integer.parseInt(System.getProperty("epochs", "8192"));
@@ -45,7 +46,8 @@ public class StockPricePrediction {
     log.info("Build lstm networks...");
     MultiLayerNetwork net = RecurrentNets.buildLstmNetworks(iterator.inputColumns(), iterator.totalOutcomes());
 
-    String multiLayerNetworkFileName = System.getProperty("network.file", "StockPriceLSTM_" + ticker + ".b" + batchSize + "." + iterations);
+    String defaultNetwaorFileName = "StockPriceLSTM_" + ticker + ".b" + batchSize + ".i" + iterations + ".lstm" + lstmLayer1Size;
+    String multiLayerNetworkFileName = System.getProperty("network.file", defaultNetwaorFileName);
     File locationToSave = new File(multiLayerNetworkFileName + ".zip");
 
     if (locationToSave.isFile() && locationToSave.exists()) {
