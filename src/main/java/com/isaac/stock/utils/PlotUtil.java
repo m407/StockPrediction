@@ -72,7 +72,10 @@ public class PlotUtil {
      * Getting bar series
      */
     OHLCSeries predictsSeries = new OHLCSeries(name + "_predicts");
+    OHLCSeries adjustedSeries = new OHLCSeries(name + "_p_adjusted");
     OHLCSeries actualsSeries = new OHLCSeries(name + "_actuals");
+    double totalRange = 0;
+    double overlapRange = 0;
     for (int i = 0; i < predicts.length; i++) {
       predictsSeries.add(
               new Hour(0, startDate.plusDays(i).getDayOfMonth(), startDate.plusDays(i).getMonthValue(), startDate.plusDays(i).getYear()),
@@ -81,6 +84,17 @@ public class PlotUtil {
               predicts[i].getDouble(2),
               predicts[i].getDouble(3)
       );
+      double adjHigh = predicts[i].getDouble(1) + actuals[i].getDouble(0) - predicts[i].getDouble(0);
+      double adjLow = predicts[i].getDouble(2) + actuals[i].getDouble(0) - predicts[i].getDouble(0);
+      double adjClose = predicts[i].getDouble(3) + actuals[i].getDouble(0) - predicts[i].getDouble(0);
+      adjustedSeries.add(
+              new Hour(3, startDate.plusDays(i).getDayOfMonth(), startDate.plusDays(i).getMonthValue(), startDate.plusDays(i).getYear()),
+              actuals[i].getDouble(0),
+              adjHigh,
+              adjLow,
+              adjClose
+      );
+
       actualsSeries.add(
               new Hour(6, startDate.plusDays(i).getDayOfMonth(), startDate.plusDays(i).getMonthValue(), startDate.plusDays(i).getYear()),
               actuals[i].getDouble(0),
@@ -88,10 +102,17 @@ public class PlotUtil {
               actuals[i].getDouble(2),
               actuals[i].getDouble(3)
       );
+      overlapRange += adjHigh > actuals[i].getDouble(2) && adjLow < actuals[i].getDouble(1) ?
+              Math.min(actuals[i].getDouble(1), adjHigh) -
+                      Math.max(actuals[i].getDouble(2), adjLow) : 0;
+      totalRange += actuals[i].getDouble(1) - actuals[i].getDouble(2);
     }
+
+    System.out.println("Overlap average:" + overlapRange / totalRange);
 
     OHLCSeriesCollection dataset = new OHLCSeriesCollection();
     dataset.addSeries(predictsSeries);
+    dataset.addSeries(adjustedSeries);
     dataset.addSeries(actualsSeries);
 
     /*

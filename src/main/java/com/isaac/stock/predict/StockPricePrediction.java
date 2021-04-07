@@ -56,7 +56,7 @@ public class StockPricePrediction {
       log.info("Testing...");
       INDArray max = Nd4j.create(iterator.getMaxLabelArray());
       INDArray min = Nd4j.create(iterator.getMinLabeleArray());
-      predictAllCategories(net, test, max, min, ticker, iterator.getLastDate().plusDays(1));
+      predictAllCategories(net, test, max, min, multiLayerNetworkFileName, iterator.getLastDate().plusDays(1));
     } else {
       // saveUpdater: i.e., the state for Momentum, RMSProp, Adagrad etc. Save this to train your network more in the future
       log.info("Training...");
