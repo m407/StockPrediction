@@ -48,6 +48,7 @@ public class StockPricePrediction {
 
     String defaultNetwaorFileName = "StockPriceLSTM_" + ticker + ".b" + batchSize + ".i" + iterations + ".lstm" + lstmLayer1Size;
     String multiLayerNetworkFileName = System.getProperty("network.file", defaultNetwaorFileName);
+    multiLayerNetworkFileName.replaceFirst(".*\\.zip", "");
     File locationToSave = new File(multiLayerNetworkFileName + ".zip");
 
     if (locationToSave.isFile() && locationToSave.exists()) {
