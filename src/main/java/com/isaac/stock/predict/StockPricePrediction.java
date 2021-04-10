@@ -46,34 +46,72 @@ public class StockPricePrediction {
     log.info("Build lstm networks...");
     MultiLayerNetwork net = RecurrentNets.buildLstmNetworks(iterator.inputColumns(), iterator.totalOutcomes());
 
-    String defaultNetwaorFileName = "StockPriceLSTM_" + ticker + ".b" + batchSize + ".i" + iterations + ".lstm" + lstmLayer1Size;
-    String multiLayerNetworkFileName = System.getProperty("network.file", defaultNetwaorFileName);
-    multiLayerNetworkFileName.replaceFirst(".*\\.zip", "");
+    String defaultNetworkFileName = "StockPriceLSTM_" + ticker + ".b" + batchSize + ".i" + iterations + ".lstm" + lstmLayer1Size;
+    String multiLayerNetworkFileName = System.getProperty("network.file", defaultNetworkFileName);
+    multiLayerNetworkFileName = multiLayerNetworkFileName.replaceFirst("\\.zip", "");
     File locationToSave = new File(multiLayerNetworkFileName + ".zip");
+
+    INDArray max = Nd4j.create(iterator.getMaxLabelArray());
+    INDArray min = Nd4j.create(iterator.getMinLabeleArray());
 
     if (locationToSave.isFile() && locationToSave.exists()) {
       log.info("Load model...");
       net = ModelSerializer.restoreMultiLayerNetwork(locationToSave);
       log.info("Testing...");
-      INDArray max = Nd4j.create(iterator.getMaxLabelArray());
-      INDArray min = Nd4j.create(iterator.getMinLabeleArray());
       predictAllCategories(net, test, max, min, multiLayerNetworkFileName, iterator.getLastDate().plusDays(1));
     } else {
       // saveUpdater: i.e., the state for Momentum, RMSProp, Adagrad etc. Save this to train your network more in the future
       log.info("Training...");
+      Double currentModelRating = 0.0;
       for (int i = 0; i < epochs; i++) {
         while (iterator.hasNext()) net.fit(iterator.next()); // fit model using mini-batch data
         iterator.reset(); // reset iterator
         net.rnnClearPreviousState(); // clear previous state
-        if (i % 128 == 0) {
-          File saveTemp = new File(multiLayerNetworkFileName + "." + i + ".zip");
-          ModelSerializer.writeModel(net, saveTemp, true);
+        if (i % 16 == 0) {
+          Double modelRating = getModelRating(net, test, max, min);
+          if (modelRating > 10 && modelRating > currentModelRating) {
+            currentModelRating = modelRating;
+            File saveTemp = new File(multiLayerNetworkFileName + "." + i + ".zip");
+            ModelSerializer.writeModel(net, saveTemp, true);
+          }
         }
       }
       log.info("Saving model...");
       ModelSerializer.writeModel(net, locationToSave, true);
     }
     log.info("Done...");
+  }
+
+  private static Double getModelRating(MultiLayerNetwork net, List<Pair<INDArray, INDArray>> testData, INDArray max, INDArray min) {
+    INDArray[] predicts = new INDArray[testData.size()];
+    INDArray[] actuals = new INDArray[testData.size()];
+
+    double totalRange = 0;
+    double adjRange = 0;
+    double overlapRange = 0;
+    double adjOpen;
+    double adjLow;
+    double actOpen;
+    double actClose;
+
+    for (int i = 0; i < testData.size(); i++) {
+      predicts[i] = net.rnnTimeStep(testData.get(i).getKey()).getRow(exampleLength - 1).mul(max.sub(min)).add(min);
+      actuals[i] = testData.get(i).getValue();
+
+      adjOpen = actuals[i].getDouble(0);
+      adjLow = predicts[i].getDouble(2) + actuals[i].getDouble(0) - predicts[i].getDouble(0);
+      actOpen = actuals[i].getDouble(0);
+      actClose = actuals[i].getDouble(3);
+
+      overlapRange += Math.max(adjOpen, adjLow) > Math.min(actOpen, actClose) && Math.min(adjOpen, adjLow) < Math.max(actOpen, actClose) ?
+              Math.min(Math.max(adjOpen, adjLow), Math.max(actOpen, actClose)) -
+                      Math.max(Math.min(actOpen, actClose), Math.min(adjOpen, adjLow)) : 0;
+      adjRange += Math.abs(adjOpen - adjLow);
+      totalRange += Math.abs(actOpen - actClose);
+    }
+    double overlapAverage = (overlapRange / totalRange) * (1 - (adjRange - overlapRange) / totalRange);
+    System.out.println("Overlap average:" + overlapAverage);
+    return Math.floor(overlapAverage * 100);
   }
 
   /**

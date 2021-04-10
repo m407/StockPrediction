@@ -65,18 +65,13 @@ public class PlotUtil {
   }
 
   public static void plot(INDArray[] predicts, INDArray[] actuals, String name, LocalDateTime startDate) {
-    double[] index = new double[predicts.length];
-    for (int i = 0; i < predicts.length; i++)
-      index[i] = i;
     /*
      * Getting bar series
      */
     OHLCSeries predictsSeries = new OHLCSeries(name + "_predicts");
     OHLCSeries adjustedSeries = new OHLCSeries(name + "_p_adjusted");
     OHLCSeries actualsSeries = new OHLCSeries(name + "_actuals");
-    double totalRange = 0;
-    double adjRange = 0;
-    double overlapRange = 0;
+
     for (int i = 0; i < predicts.length; i++) {
       predictsSeries.add(
               new Hour(0, startDate.plusDays(i).getDayOfMonth(), startDate.plusDays(i).getMonthValue(), startDate.plusDays(i).getYear()),
@@ -107,16 +102,8 @@ public class PlotUtil {
               actHigh,
               actLow,
               actClose
-      );
-
-      overlapRange += Math.max(adjOpen, adjLow) > Math.min(actOpen, actClose) && Math.min(adjOpen, adjLow) < Math.max(actOpen, actClose) ?
-              Math.min(Math.max(adjOpen, adjLow), Math.max(actOpen, actClose)) -
-                      Math.max(Math.min(actOpen, actClose), Math.min(adjOpen, adjLow)) : 0;
-      adjRange += Math.abs(adjOpen - adjLow);
-      totalRange += Math.abs(actOpen - actClose);
+      )
     }
-
-    System.out.println("Overlap average:" + (overlapRange / totalRange) * (1 - (adjRange - overlapRange) / totalRange));
 
     OHLCSeriesCollection dataset = new OHLCSeriesCollection();
     dataset.addSeries(predictsSeries);
