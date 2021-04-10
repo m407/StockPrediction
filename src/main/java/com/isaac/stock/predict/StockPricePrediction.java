@@ -71,7 +71,7 @@ public class StockPricePrediction {
           Double modelRating = getModelRating(net, test, max, min);
           if (modelRating > 10 && modelRating > currentModelRating) {
             currentModelRating = modelRating;
-            File saveTemp = new File(multiLayerNetworkFileName + "." + i + ".zip");
+            File saveTemp = new File(multiLayerNetworkFileName + ".rating" + modelRating + "." + i + ".zip");
             ModelSerializer.writeModel(net, saveTemp, true);
           }
         }
