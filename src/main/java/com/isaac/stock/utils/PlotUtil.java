@@ -102,7 +102,7 @@ public class PlotUtil {
               actHigh,
               actLow,
               actClose
-      )
+      );
     }
 
     OHLCSeriesCollection dataset = new OHLCSeriesCollection();
