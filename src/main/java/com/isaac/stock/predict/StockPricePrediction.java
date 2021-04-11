@@ -58,6 +58,7 @@ public class StockPricePrediction {
       log.info("Load model...");
       net = ModelSerializer.restoreMultiLayerNetwork(locationToSave);
       log.info("Testing...");
+      getModelRating(net, test, max, min);
       predictAllCategories(net, test, max, min, multiLayerNetworkFileName, iterator.getLastDate().plusDays(1));
     } else {
       // saveUpdater: i.e., the state for Momentum, RMSProp, Adagrad etc. Save this to train your network more in the future
@@ -69,7 +70,7 @@ public class StockPricePrediction {
         net.rnnClearPreviousState(); // clear previous state
         if (i % 16 == 0) {
           Double modelRating = getModelRating(net, test, max, min);
-          if (modelRating > 10 && modelRating > currentModelRating) {
+          if (modelRating > 10 || modelRating > currentModelRating) {
             currentModelRating = modelRating;
             File saveTemp = new File(multiLayerNetworkFileName + ".rating" + modelRating + "." + i + ".zip");
             ModelSerializer.writeModel(net, saveTemp, true);
@@ -90,7 +91,7 @@ public class StockPricePrediction {
     double adjRange = 0;
     double overlapRange = 0;
     double adjOpen;
-    double adjLow;
+    double adjClose;
     double actOpen;
     double actClose;
 
@@ -99,19 +100,19 @@ public class StockPricePrediction {
       actuals[i] = testData.get(i).getValue();
 
       adjOpen = actuals[i].getDouble(0);
-      adjLow = predicts[i].getDouble(2) + actuals[i].getDouble(0) - predicts[i].getDouble(0);
+      adjClose = predicts[i].getDouble(2) + actuals[i].getDouble(0) - predicts[i].getDouble(0);
       actOpen = actuals[i].getDouble(0);
       actClose = actuals[i].getDouble(3);
 
-      overlapRange += Math.max(adjOpen, adjLow) > Math.min(actOpen, actClose) && Math.min(adjOpen, adjLow) < Math.max(actOpen, actClose) ?
-              Math.min(Math.max(adjOpen, adjLow), Math.max(actOpen, actClose)) -
-                      Math.max(Math.min(actOpen, actClose), Math.min(adjOpen, adjLow)) : 0;
-      adjRange += Math.abs(adjOpen - adjLow);
+      overlapRange += Math.max(adjOpen, adjClose) > Math.min(actOpen, actClose) && Math.min(adjOpen, adjClose) < Math.max(actOpen, actClose) ?
+              Math.min(Math.max(adjOpen, adjClose), Math.max(actOpen, actClose)) -
+                      Math.max(Math.min(actOpen, actClose), Math.min(adjOpen, adjClose)) : 0;
+      adjRange += Math.abs(adjOpen - adjClose);
       totalRange += Math.abs(actOpen - actClose);
     }
-    double overlapAverage = (overlapRange / totalRange) * (1 - (adjRange - overlapRange) / totalRange);
-    System.out.println("Overlap average:" + overlapAverage);
-    return Math.floor(overlapAverage * 100);
+    double overlapAverage = Math.floor((overlapRange / totalRange) * (overlapRange / adjRange) * 100);
+    System.out.println("Overlap average: " + overlapAverage);
+    return overlapAverage;
   }
 
   /**
