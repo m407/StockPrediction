@@ -59,7 +59,7 @@ public class StockPricePrediction {
       net = ModelSerializer.restoreMultiLayerNetwork(locationToSave);
       log.info("Testing...");
       getModelRating(net, test, max, min);
-      if (System.getProperty("plot") == "true") {
+      if (System.getProperty("plot").equals("true")) {
         predictAllCategories(net, test, max, min, multiLayerNetworkFileName, iterator.getLastDate().plusDays(1));
       }
     } else {
@@ -123,7 +123,7 @@ public class StockPricePrediction {
     System.out.println("Overlap overlapTotalCount: " + overlapTotalCount);
     System.out.println("Overlap percent: " + ((double) overlapTotalCount / testData.size()) * 100);
     System.out.println("Overlap averageAdjusted: " + overlapAverage * ((double) overlapTotalCount / testData.size()));
-    return overlapAverage * ((double) overlapTotalCount / testData.size());
+    return Math.floor(overlapAverage * ((double) overlapTotalCount / testData.size()));
   }
 
   /**
