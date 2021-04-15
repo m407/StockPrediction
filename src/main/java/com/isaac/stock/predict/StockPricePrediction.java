@@ -5,6 +5,7 @@ import com.isaac.stock.representation.StockDataSetIterator;
 import com.isaac.stock.utils.PlotUtil;
 import javafx.util.Pair;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
 import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
@@ -58,6 +59,7 @@ public class StockPricePrediction {
     if (locationToSave.isFile() && locationToSave.exists()) {
       log.info("Load model...");
       net = ModelSerializer.restoreMultiLayerNetwork(locationToSave);
+      net.setListeners(new ScoreIterationListener(100));
       log.info("Testing...");
       currentModelRating = getModelRating(net, test, max, min);
       if (Boolean.parseBoolean(System.getProperty("plot"))) {
