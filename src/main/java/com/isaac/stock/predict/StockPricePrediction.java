@@ -26,10 +26,9 @@ public class StockPricePrediction {
 
   private static final Logger log = LoggerFactory.getLogger(StockPricePrediction.class);
 
-  private static final int exampleLength = 66; // time series length, assume 66 working days in 3 months
+  public static final int exampleLength = 66; // time series length, assume 66 working days in 3 months
 
   public static void main(String[] args) throws IOException {
-    String connectionString = System.getProperty("prices.connection", "jdbc:postgresql://localhost:5432/stock_prices");
     String ticker = System.getProperty("prices.ticker", "RI.RTSI");
     int iterations = Integer.parseInt(System.getProperty("iterations", "1"));
     int lstmLayer1Size = Integer.parseInt(System.getProperty("lstmLayer1Size", "256"));
@@ -37,15 +36,16 @@ public class StockPricePrediction {
     int batchSize = Integer.parseInt(System.getProperty("batchSize", "86")); // mini-batch size
     double splitRatio = 0.85; // 85% for training, 15% for testing
     int epochs = Integer.parseInt(System.getProperty("epochs", "8192"));
-    ; // training epochs
+    boolean continueTraining = Boolean.parseBoolean(System.getProperty("continueTraining", "true"));
+
+    Double currentModelRating = 0.0;
+    MultiLayerNetwork net;
 
     log.info("Create dataSet iterator...");
-    StockDataSetIterator iterator = new StockDataSetIterator(connectionString, ticker, batchSize, exampleLength, splitRatio);
+    StockDataSetIterator iterator = new StockDataSetIterator(ticker, batchSize, splitRatio);
     log.info("Load test dataset...");
     List<Pair<INDArray, INDArray>> test = iterator.getTestDataSet();
 
-    log.info("Build lstm networks...");
-    MultiLayerNetwork net = RecurrentNets.buildLstmNetworks(iterator.inputColumns(), iterator.totalOutcomes());
 
     String defaultNetworkFileName = "StockPriceLSTM_" + ticker + ".b" + batchSize + ".i" + iterations + ".lstm" + lstmLayer1Size + "x" + lstmLayerRatio;
     String multiLayerNetworkFileName = System.getProperty("network.file", defaultNetworkFileName);
@@ -53,27 +53,30 @@ public class StockPricePrediction {
     File locationToSave = new File(multiLayerNetworkFileName + ".zip");
 
     INDArray max = Nd4j.create(iterator.getMaxLabelArray());
-    INDArray min = Nd4j.create(iterator.getMinLabeleArray());
+    INDArray min = Nd4j.create(iterator.getMinLabelArray());
 
     if (locationToSave.isFile() && locationToSave.exists()) {
       log.info("Load model...");
       net = ModelSerializer.restoreMultiLayerNetwork(locationToSave);
       log.info("Testing...");
-      getModelRating(net, test, max, min);
-      if (System.getProperty("plot").equals("true")) {
+      currentModelRating = getModelRating(net, test, max, min);
+      if (Boolean.parseBoolean(System.getProperty("plot"))) {
         predictAllCategories(net, test, max, min, multiLayerNetworkFileName, iterator.getLastDate().plusDays(1));
       }
     } else {
+      log.info("Build lstm networks...");
+      net = RecurrentNets.buildLstmNetworks(iterator.inputColumns(), iterator.totalOutcomes());
+    }
+    if (continueTraining) {
       // saveUpdater: i.e., the state for Momentum, RMSProp, Adagrad etc. Save this to train your network more in the future
       log.info("Training...");
-      Double currentModelRating = 0.0;
       for (int i = 0; i < epochs; i++) {
         while (iterator.hasNext()) net.fit(iterator.next()); // fit model using mini-batch data
         iterator.reset(); // reset iterator
         net.rnnClearPreviousState(); // clear previous state
         if (i % 16 == 0) {
           Double modelRating = getModelRating(net, test, max, min);
-          if (modelRating > 5 || modelRating > currentModelRating) {
+          if (modelRating > 4 || modelRating > currentModelRating) {
             currentModelRating = modelRating;
             File saveTemp = new File(multiLayerNetworkFileName + ".rating" + modelRating + "." + i + ".zip");
             ModelSerializer.writeModel(net, saveTemp, true);

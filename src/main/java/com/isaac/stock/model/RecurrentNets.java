@@ -26,8 +26,8 @@ public class RecurrentNets {
   private static final int seed = 12345;
 
   private static final int lstmLayer1Size = Integer.parseInt(System.getProperty("lstmLayer1Size", "256"));
-  private static final int lstmLayerRatio = Integer.parseInt(System.getProperty("lstmLayerRatio", "2"));
-  private static final int lstmLayer2Size = lstmLayer1Size * lstmLayerRatio;
+  private static final double lstmLayerRatio = Double.parseDouble(System.getProperty("lstmLayerRatio", "2"));
+  private static final int lstmLayer2Size = (int) Math.round(lstmLayer1Size * lstmLayerRatio);
   private static final int denseLayerSize = lstmLayer1Size;
   private static final double dropoutRatio = 0.15;
   private static final int truncatedBPTTLength = 66; // exampleLength

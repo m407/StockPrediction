@@ -81,9 +81,9 @@ public class PlotUtil {
               predicts[i].getDouble(3)
       );
       double adjOpen = actuals[i].getDouble(0);
-      double adjHigh = predicts[i].getDouble(1) + actuals[i].getDouble(0) - predicts[i].getDouble(0);
-      double adjLow = predicts[i].getDouble(2) + actuals[i].getDouble(0) - predicts[i].getDouble(0);
-      double adjClose = predicts[i].getDouble(3) + actuals[i].getDouble(0) - predicts[i].getDouble(0);
+      double adjHigh = predicts[i].getDouble(1) + adjOpen - predicts[i].getDouble(0);
+      double adjLow = predicts[i].getDouble(2) + adjOpen - predicts[i].getDouble(0);
+      double adjClose = predicts[i].getDouble(3) + adjOpen - predicts[i].getDouble(0);
       adjustedSeries.add(
               new Hour(3, startDate.plusDays(i).getDayOfMonth(), startDate.plusDays(i).getMonthValue(), startDate.plusDays(i).getYear()),
               adjOpen,
