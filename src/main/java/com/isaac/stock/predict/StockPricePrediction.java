@@ -80,7 +80,7 @@ public class StockPricePrediction {
           ModelRating modelRating = getModelRating(net, test, max, min);
           if (modelRating.averageAdjusted > 4 || modelRating.overlapPercent > 58 || modelRating.averageAdjusted > currentModelRating.averageAdjusted) {
             currentModelRating = modelRating;
-            File saveTemp = new File(multiLayerNetworkFileName + ".rating" + modelRating + "." + i + ".zip");
+            File saveTemp = new File(multiLayerNetworkFileName + ".rating" + modelRating.floorAverageAdjusted + ".percent" + modelRating.overlapPercent + "." + i + ".zip");
             ModelSerializer.writeModel(net, saveTemp, true);
           }
         }
@@ -128,7 +128,7 @@ public class StockPricePrediction {
     ModelRating modelRating = new ModelRating();
     modelRating.overlapPercent = ((double) overlapTotalCount / testData.size()) * 100;
     modelRating.averageAdjusted = overlapAverage * ((double) overlapTotalCount / testData.size());
-    modelRating.floorOverlapAverage = Math.floor(overlapAverage * ((double) overlapTotalCount / testData.size()));
+    modelRating.floorAverageAdjusted = Math.floor(modelRating.averageAdjusted);
     System.out.println("Overlap average: " + overlapAverage);
     System.out.println("Overlap overlapTotalCount: " + overlapTotalCount);
     System.out.println("Overlap overlapPercent: " + modelRating.overlapPercent);
