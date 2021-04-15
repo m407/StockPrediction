@@ -39,7 +39,7 @@ public class StockPricePrediction {
     int epochs = Integer.parseInt(System.getProperty("epochs", "8192"));
     boolean continueTraining = Boolean.parseBoolean(System.getProperty("continueTraining", "true"));
 
-    Double currentModelRating = 0.0;
+    ModelRating currentModelRating = new ModelRating();
     MultiLayerNetwork net;
 
     log.info("Create dataSet iterator...");
@@ -77,8 +77,8 @@ public class StockPricePrediction {
         iterator.reset(); // reset iterator
         net.rnnClearPreviousState(); // clear previous state
         if (i % 16 == 0) {
-          Double modelRating = getModelRating(net, test, max, min);
-          if (modelRating > 4 || modelRating > currentModelRating) {
+          ModelRating modelRating = getModelRating(net, test, max, min);
+          if (modelRating.averageAdjusted > 4 || modelRating.overlapPercent > 58 || modelRating.averageAdjusted > currentModelRating.averageAdjusted) {
             currentModelRating = modelRating;
             File saveTemp = new File(multiLayerNetworkFileName + ".rating" + modelRating + "." + i + ".zip");
             ModelSerializer.writeModel(net, saveTemp, true);
@@ -91,7 +91,7 @@ public class StockPricePrediction {
     log.info("Done...");
   }
 
-  private static Double getModelRating(MultiLayerNetwork net, List<Pair<INDArray, INDArray>> testData, INDArray max, INDArray min) {
+  private static ModelRating getModelRating(MultiLayerNetwork net, List<Pair<INDArray, INDArray>> testData, INDArray max, INDArray min) {
     INDArray[] predicts = new INDArray[testData.size()];
     INDArray[] actuals = new INDArray[testData.size()];
 
@@ -125,11 +125,15 @@ public class StockPricePrediction {
       totalRange += Math.abs(actOpen - actClose);
     }
     double overlapAverage = Math.floor((overlapTotal / totalRange) * (overlapTotal / adjRange) * 100);
+    ModelRating modelRating = new ModelRating();
+    modelRating.overlapPercent = ((double) overlapTotalCount / testData.size()) * 100;
+    modelRating.averageAdjusted = overlapAverage * ((double) overlapTotalCount / testData.size());
+    modelRating.floorOverlapAverage = Math.floor(overlapAverage * ((double) overlapTotalCount / testData.size()));
     System.out.println("Overlap average: " + overlapAverage);
     System.out.println("Overlap overlapTotalCount: " + overlapTotalCount);
-    System.out.println("Overlap percent: " + ((double) overlapTotalCount / testData.size()) * 100);
-    System.out.println("Overlap averageAdjusted: " + overlapAverage * ((double) overlapTotalCount / testData.size()));
-    return Math.floor(overlapAverage * ((double) overlapTotalCount / testData.size()));
+    System.out.println("Overlap overlapPercent: " + modelRating.overlapPercent);
+    System.out.println("Overlap averageAdjusted: " + modelRating.averageAdjusted);
+    return modelRating;
   }
 
   /**
