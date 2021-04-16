@@ -1,13 +1,33 @@
 package com.isaac.stock.predict;
 
 public class ModelRating {
-  public double averageAdjusted;
-  public double overlapPercent;
-  public double floorAverageAdjusted;
+  private double averageAdjusted;
+  private double overlapPercent;
+  private double floorAverageAdjusted;
 
   public ModelRating() {
-    this.averageAdjusted = 0;
-    this.overlapPercent = 0;
-    this.floorAverageAdjusted = 0;
+    this.setAverageAdjusted(0);
+    this.setOverlapPercent(0);
+  }
+
+  public double getAverageAdjusted() {
+    return averageAdjusted;
+  }
+
+  public void setAverageAdjusted(double averageAdjusted) {
+    this.averageAdjusted = averageAdjusted;
+    floorAverageAdjusted = Math.floor(averageAdjusted);
+  }
+
+  public double getOverlapPercent() {
+    return overlapPercent;
+  }
+
+  public void setOverlapPercent(double overlapPercent) {
+    this.overlapPercent = Math.floor(overlapPercent);
+  }
+
+  public double getFloorAverageAdjusted() {
+    return floorAverageAdjusted;
   }
 }

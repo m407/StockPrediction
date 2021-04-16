@@ -12,7 +12,7 @@ import org.ta4j.core.trading.rules.CrossedUpIndicatorRule;
 import org.ta4j.core.trading.rules.OverIndicatorRule;
 import org.ta4j.core.trading.rules.UnderIndicatorRule;
 
-public class DeepLearningStrategy {
+public class DLStrategy {
   public static Strategy buildStrategy(BarSeries series) {
     if (series == null) {
       throw new IllegalArgumentException("Series cannot be null");

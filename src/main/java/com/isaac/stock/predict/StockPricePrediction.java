@@ -78,9 +78,9 @@ public class StockPricePrediction {
         net.rnnClearPreviousState(); // clear previous state
         if (i % 16 == 0) {
           ModelRating modelRating = getModelRating(net, test, max, min);
-          if (modelRating.averageAdjusted > 4 || modelRating.overlapPercent > 58 || modelRating.averageAdjusted > currentModelRating.averageAdjusted) {
+          if (modelRating.getAverageAdjusted() > 4 || modelRating.getOverlapPercent() > 58 || modelRating.getAverageAdjusted() > currentModelRating.getAverageAdjusted()) {
             currentModelRating = modelRating;
-            File saveTemp = new File(multiLayerNetworkFileName + ".rating" + modelRating.floorAverageAdjusted + ".percent" + modelRating.overlapPercent + "." + i + ".zip");
+            File saveTemp = new File(multiLayerNetworkFileName + ".rating" + modelRating.getFloorAverageAdjusted() + ".percent" + modelRating.getOverlapPercent() + "." + i + ".zip");
             ModelSerializer.writeModel(net, saveTemp, true);
           }
         }
@@ -126,13 +126,12 @@ public class StockPricePrediction {
     }
     double overlapAverage = Math.floor((overlapTotal / totalRange) * (overlapTotal / adjRange) * 100);
     ModelRating modelRating = new ModelRating();
-    modelRating.overlapPercent = ((double) overlapTotalCount / testData.size()) * 100;
-    modelRating.averageAdjusted = overlapAverage * ((double) overlapTotalCount / testData.size());
-    modelRating.floorAverageAdjusted = Math.floor(modelRating.averageAdjusted);
+    modelRating.setOverlapPercent(((double) overlapTotalCount / testData.size()) * 100);
+    modelRating.setAverageAdjusted(overlapAverage * ((double) overlapTotalCount / testData.size()));
     System.out.println("Overlap average: " + overlapAverage);
     System.out.println("Overlap overlapTotalCount: " + overlapTotalCount);
-    System.out.println("Overlap overlapPercent: " + modelRating.overlapPercent);
-    System.out.println("Overlap averageAdjusted: " + modelRating.averageAdjusted);
+    System.out.println("Overlap overlapPercent: " + modelRating.getOverlapPercent());
+    System.out.println("Overlap averageAdjusted: " + modelRating.getAverageAdjusted());
     return modelRating;
   }
 
