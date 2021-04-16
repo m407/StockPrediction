@@ -9,11 +9,11 @@ import org.ta4j.core.Bar;
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.indicators.CachedIndicator;
 
-public class DLClosePriceIndicatior extends CachedIndicator<Double> {
+public class DLDayClosePriceIndicatior extends CachedIndicator<Double> {
   private MultiLayerNetwork net;
   private StockDataSetIterator stockDataSetIterator;
 
-  public DLClosePriceIndicatior(MultiLayerNetwork net, StockDataSetIterator stockDataSetIterator, BarSeries series) {
+  public DLDayClosePriceIndicatior(MultiLayerNetwork net, StockDataSetIterator stockDataSetIterator, BarSeries series) {
     super(series);
 
     this.net = net;
