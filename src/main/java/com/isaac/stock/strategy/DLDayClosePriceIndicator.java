@@ -8,12 +8,14 @@ import org.nd4j.linalg.factory.Nd4j;
 import org.ta4j.core.Bar;
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.indicators.CachedIndicator;
+import org.ta4j.core.num.Num;
+import org.ta4j.core.num.PrecisionNum;
 
-public class DLDayClosePriceIndicatior extends CachedIndicator<Double> {
+public class DLDayClosePriceIndicator extends CachedIndicator<Num> {
   private MultiLayerNetwork net;
   private StockDataSetIterator stockDataSetIterator;
 
-  public DLDayClosePriceIndicatior(MultiLayerNetwork net, StockDataSetIterator stockDataSetIterator, BarSeries series) {
+  public DLDayClosePriceIndicator(MultiLayerNetwork net, StockDataSetIterator stockDataSetIterator, BarSeries series) {
     super(series);
 
     this.net = net;
@@ -21,7 +23,7 @@ public class DLDayClosePriceIndicatior extends CachedIndicator<Double> {
   }
 
   @Override
-  protected Double calculate(int index) {
+  protected Num calculate(int index) {
     try {
       Bar bar = this.getBarSeries().getBar(index);
       INDArray predicts;
@@ -35,11 +37,11 @@ public class DLDayClosePriceIndicatior extends CachedIndicator<Double> {
               .rnnTimeStep(testData)
               .mul(max.sub(min)).add(min);
 
-      double adjOpen = currentDayData.getData()[3];
+      double adjOpen = currentDayData.getData()[0];
       double adjClose = predicts.getDouble(3) + adjOpen - predicts.getDouble(0);
-      return adjClose;
+      return PrecisionNum.valueOf(adjClose);
     } catch (Exception e) {
-      return -1.0;
+      return PrecisionNum.valueOf(Double.MIN_VALUE);
     }
   }
 }

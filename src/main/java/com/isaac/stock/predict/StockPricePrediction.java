@@ -1,7 +1,10 @@
 package com.isaac.stock.predict;
 
 import com.isaac.stock.model.RecurrentNets;
+import com.isaac.stock.representation.StockData;
+import com.isaac.stock.representation.StockDataReader;
 import com.isaac.stock.representation.StockDataSetIterator;
+import com.isaac.stock.strategy.DLStrategy;
 import com.isaac.stock.utils.PlotUtil;
 import javafx.util.Pair;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
@@ -11,11 +14,15 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.ta4j.core.BarSeries;
+import org.ta4j.core.BaseBar;
+import org.ta4j.core.BaseBarSeriesBuilder;
 
 import java.io.File;
 import java.io.IOException;
-import java.time.LocalDateTime;
+import java.time.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by zhanghao on 26/7/17.
@@ -64,6 +71,25 @@ public class StockPricePrediction {
       currentModelRating = getModelRating(net, test, max, min);
       if (Boolean.parseBoolean(System.getProperty("plot"))) {
         predictAllCategories(net, test, max, min, multiLayerNetworkFileName, iterator.getLastDate().plusDays(1));
+      }
+      if (Boolean.parseBoolean(System.getProperty("demoTrade"))) {
+        StockDataReader stockDataReader = new StockDataReader("RI.RTSI.10");
+        List<StockData> stockData = stockDataReader.readAll();
+        BaseBarSeriesBuilder barSeriesBuilder = new BaseBarSeriesBuilder();
+        BarSeries barSeries = barSeriesBuilder
+                .withName("RI.RTSI.10")
+                .withBars(stockData.stream().map(item -> new BaseBar(
+                        Duration.ofMinutes(10),
+                        ZonedDateTime.ofLocal(item.getDate(), ZoneId.systemDefault(), ZoneOffset.UTC),
+                        item.getData()[0],
+                        item.getData()[1],
+                        item.getData()[2],
+                        item.getData()[3],
+                        item.getData()[4]
+                ))
+                        .collect(Collectors.toList()))
+                .build();
+        DLStrategy.printOutStrategy(net, iterator, barSeries);
       }
     } else {
       log.info("Build lstm networks...");
