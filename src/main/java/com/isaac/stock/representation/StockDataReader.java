@@ -71,8 +71,23 @@ public class StockDataReader {
 
     ResultSet rs = statement.executeQuery("SELECT * FROM \"" + ticker + "\"" +
             " WHERE ticker='" + ticker + "' AND per='" + period + "'" +
-            " AND date='" + localDateTime.toLocalDate() + "'::DATE" +
-            " AND time='" + localDateTime.toLocalTime() + "'::TIME ;");
+            " AND date='" + localDateTime.toLocalDate() + "'::DATE;");
+    return getSingleStockData(statement, rs);
+  }
+
+  public StockData readOneClosest(LocalDateTime localDateTime, String period) throws Exception {
+    StockData stockData;
+    Statement statement = connection.createStatement();
+
+    ResultSet rs = statement.executeQuery("SELECT * FROM \"" + ticker + "\"" +
+            " WHERE ticker='" + ticker + "' AND per='" + period + "'" +
+            " AND date<='" + localDateTime.toLocalDate() + "'::DATE" +
+            " LIMIT 1;");
+    return getSingleStockData(statement, rs);
+  }
+
+  private StockData getSingleStockData(Statement statement, ResultSet rs) throws Exception {
+    StockData stockData;
     if (rs.next()) {
       vectorSize = rs.getMetaData().getColumnCount() - 4; // skip meta columns: date time per tiker
       double[] nums = new double[vectorSize];

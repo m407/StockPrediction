@@ -78,15 +78,17 @@ public class StockPricePrediction {
         BaseBarSeriesBuilder barSeriesBuilder = new BaseBarSeriesBuilder();
         BarSeries barSeries = barSeriesBuilder
                 .withName("RI.RTSI.10")
-                .withBars(stockData.stream().map(item -> new BaseBar(
-                        Duration.ofMinutes(10),
-                        ZonedDateTime.ofLocal(item.getDate(), ZoneId.systemDefault(), ZoneOffset.UTC),
-                        item.getData()[0],
-                        item.getData()[1],
-                        item.getData()[2],
-                        item.getData()[3],
-                        item.getData()[4]
-                ))
+                .withBars(stockData.stream()
+                        .filter(item -> item.getDate().getYear() >= 2021 && item.getDate().getMonthValue() == 2)
+                        .map(item -> new BaseBar(
+                                Duration.ofMinutes(10),
+                                ZonedDateTime.ofLocal(item.getDate(), ZoneId.systemDefault(), ZoneOffset.UTC),
+                                item.getData()[0],
+                                item.getData()[1],
+                                item.getData()[2],
+                                item.getData()[3],
+                                item.getData()[4]
+                        ))
                         .collect(Collectors.toList()))
                 .build();
         DLStrategy.printOutStrategy(net, iterator, barSeries);

@@ -21,7 +21,7 @@ public class DLDayOpenPriceIndicator extends CachedIndicator<Num> {
   protected Num calculate(int index) {
     try {
       Bar bar = this.getBarSeries().getBar(index);
-      StockData currentDayData = stockDataSetIterator.getStockDataReader().readOne(bar.getBeginTime().toLocalDateTime(), bar.getDateName());
+      StockData currentDayData = stockDataSetIterator.getStockDataReader().readOne(bar.getBeginTime().toLocalDateTime(), "D");
       return PrecisionNum.valueOf(currentDayData.getData()[0]);
     } catch (Exception e) {
       return PrecisionNum.valueOf(Double.MIN_VALUE);

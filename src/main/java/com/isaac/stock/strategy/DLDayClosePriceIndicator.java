@@ -30,8 +30,8 @@ public class DLDayClosePriceIndicator extends CachedIndicator<Num> {
       INDArray max = Nd4j.create(stockDataSetIterator.getMaxLabelArray());
       INDArray min = Nd4j.create(stockDataSetIterator.getMinLabelArray());
 
-      StockData previosDayData = stockDataSetIterator.getStockDataReader().readOne(bar.getBeginTime().toLocalDateTime().minusDays(1), bar.getDateName());
-      StockData currentDayData = stockDataSetIterator.getStockDataReader().readOne(bar.getBeginTime().toLocalDateTime(), bar.getDateName());
+      StockData previosDayData = stockDataSetIterator.getStockDataReader().readOneClosest(bar.getBeginTime().toLocalDateTime().minusDays(1), "D");
+      StockData currentDayData = stockDataSetIterator.getStockDataReader().readOne(bar.getBeginTime().toLocalDateTime(), "D");
       INDArray testData = Nd4j.create(previosDayData.getData());
       predicts = net
               .rnnTimeStep(testData)

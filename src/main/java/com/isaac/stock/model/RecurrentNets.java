@@ -21,7 +21,7 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
  */
 public class RecurrentNets {
 
-  private static final double learningRate = 0.07;
+  private static final double learningRate = 0.025;
   private static final int iterations = Integer.parseInt(System.getProperty("iterations", "1"));
   private static final int seed = 12345;
 
@@ -29,7 +29,7 @@ public class RecurrentNets {
   private static final double lstmLayerRatio = Double.parseDouble(System.getProperty("lstmLayerRatio", "2"));
   private static final int lstmLayer2Size = (int) Math.round(lstmLayer1Size * lstmLayerRatio);
   private static final int denseLayerSize = lstmLayer1Size;
-  private static final double dropoutRatio = 0.15;
+  private static final double dropoutRatio = 0.1;
   private static final int truncatedBPTTLength = 66; // exampleLength
 
   public static MultiLayerNetwork buildLstmNetworks(int nIn, int nOut) {
