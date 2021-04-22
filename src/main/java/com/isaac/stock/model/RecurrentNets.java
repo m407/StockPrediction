@@ -1,5 +1,6 @@
 package com.isaac.stock.model;
 
+import com.isaac.stock.predict.StockPricePrediction;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.BackpropType;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
@@ -30,7 +31,7 @@ public class RecurrentNets {
   private static final int lstmLayer2Size = (int) Math.round(lstmLayer1Size * lstmLayerRatio);
   private static final int denseLayerSize = lstmLayer1Size;
   private static final double dropoutRatio = 0.1;
-  private static final int truncatedBPTTLength = 66; // exampleLength
+  private static final int truncatedBPTTLength = StockPricePrediction.exampleLength; // exampleLength
 
   public static MultiLayerNetwork buildLstmNetworks(int nIn, int nOut) {
     MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()

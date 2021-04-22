@@ -1,5 +1,6 @@
 package com.isaac.stock.strategy;
 
+import com.isaac.stock.predict.StockPricePrediction;
 import com.isaac.stock.representation.StockData;
 import com.isaac.stock.representation.StockDataSetIterator;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
@@ -10,6 +11,8 @@ import org.ta4j.core.BarSeries;
 import org.ta4j.core.indicators.CachedIndicator;
 import org.ta4j.core.num.Num;
 import org.ta4j.core.num.PrecisionNum;
+
+import java.util.List;
 
 public class DLDayClosePriceIndicator extends CachedIndicator<Num> {
   private MultiLayerNetwork net;
@@ -27,15 +30,18 @@ public class DLDayClosePriceIndicator extends CachedIndicator<Num> {
     try {
       Bar bar = this.getBarSeries().getBar(index);
       INDArray predicts;
-      INDArray max = Nd4j.create(stockDataSetIterator.getMaxLabelArray());
-      INDArray min = Nd4j.create(stockDataSetIterator.getMinLabelArray());
 
-      StockData previosDayData = stockDataSetIterator.getStockDataReader().readOneClosest(bar.getBeginTime().toLocalDateTime().minusDays(1), "D");
+      List<StockData> previosDayData = stockDataSetIterator.getStockDataReader().readClosestExample(bar.getBeginTime().toLocalDateTime().minusDays(1), "D");
       StockData currentDayData = stockDataSetIterator.getStockDataReader().readOne(bar.getBeginTime().toLocalDateTime(), "D");
-      INDArray testData = Nd4j.create(previosDayData.getData());
+      INDArray testData = Nd4j.create(new int[]{StockPricePrediction.exampleLength, StockDataSetIterator.VECTOR_SIZE}, 'f');
+      for (int i = 0; i < previosDayData.size(); i++) {
+        for (int j = 0; j < StockDataSetIterator.VECTOR_SIZE; j++) {
+          testData.putScalar(new int[]{i, j}, previosDayData.get(i).getData()[j]);
+        }
+      }
       predicts = net
               .rnnTimeStep(testData)
-              .mul(max.sub(min)).add(min);
+              .getRow(StockPricePrediction.exampleLength);
 
       double adjOpen = currentDayData.getData()[0];
       double adjClose = predicts.getDouble(3) + adjOpen - predicts.getDouble(0);

@@ -1,9 +1,8 @@
 package com.isaac.stock.representation;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import com.isaac.stock.predict.StockPricePrediction;
+
+import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,21 +42,7 @@ public class StockDataReader {
       Statement statement = connection.createStatement();
 
       ResultSet rs = statement.executeQuery("SELECT * FROM \"" + ticker + "\";");
-      while (rs.next()) {
-        vectorSize = rs.getMetaData().getColumnCount() - 4; // skip meta columns: date time per tiker
-        double[] nums = new double[vectorSize];
-        for (int i = 0; i < vectorSize - 4; i++) {
-          nums[i] = rs.getDouble(i + 5);
-        }
-        stockDataList.add(new StockData(
-                rs.getString(1),
-                rs.getString(2),
-                rs.getDate(3).toLocalDate(),
-                rs.getTime(4).toLocalTime(),
-                nums));
-      }
-      rs.close();
-      statement.close();
+      getAllStockData(stockDataList, statement, rs);
     } catch (Exception e) {
       System.err.println(e.getClass().getName() + ": " + e.getMessage());
       e.printStackTrace();
@@ -66,7 +51,6 @@ public class StockDataReader {
   }
 
   public StockData readOne(LocalDateTime localDateTime, String period) throws Exception {
-    StockData stockData;
     Statement statement = connection.createStatement();
 
     ResultSet rs = statement.executeQuery("SELECT * FROM \"" + ticker + "\"" +
@@ -75,15 +59,39 @@ public class StockDataReader {
     return getSingleStockData(statement, rs);
   }
 
-  public StockData readOneClosest(LocalDateTime localDateTime, String period) throws Exception {
-    StockData stockData;
-    Statement statement = connection.createStatement();
+  public List<StockData> readClosestExample(LocalDateTime localDateTime, String period) throws Exception {
+    List<StockData> stockDataList = new ArrayList<>();
+    try {
+      Statement statement = connection.createStatement();
 
-    ResultSet rs = statement.executeQuery("SELECT * FROM \"" + ticker + "\"" +
-            " WHERE ticker='" + ticker + "' AND per='" + period + "'" +
-            " AND date<='" + localDateTime.toLocalDate() + "'::DATE" +
-            " LIMIT 1;");
-    return getSingleStockData(statement, rs);
+      ResultSet rs = statement.executeQuery("SELECT * FROM \"" + ticker + "\"" +
+              " WHERE ticker='" + ticker + "' AND per='" + period + "'" +
+              " AND date<='" + localDateTime.toLocalDate() + "'::DATE" +
+              " LIMIT " + StockPricePrediction.exampleLength + ";");
+      getAllStockData(stockDataList, statement, rs);
+    } catch (Exception e) {
+      System.err.println(e.getClass().getName() + ": " + e.getMessage());
+      e.printStackTrace();
+    }
+    return stockDataList;
+  }
+
+  private void getAllStockData(List<StockData> stockDataList, Statement statement, ResultSet rs) throws SQLException {
+    while (rs.next()) {
+      vectorSize = rs.getMetaData().getColumnCount() - 4; // skip meta columns: date time per tiker
+      double[] nums = new double[vectorSize];
+      for (int i = 0; i < vectorSize - 4; i++) {
+        nums[i] = rs.getDouble(i + 5);
+      }
+      stockDataList.add(new StockData(
+              rs.getString(1),
+              rs.getString(2),
+              rs.getDate(3).toLocalDate(),
+              rs.getTime(4).toLocalTime(),
+              nums));
+    }
+    rs.close();
+    statement.close();
   }
 
   private StockData getSingleStockData(Statement statement, ResultSet rs) throws Exception {
