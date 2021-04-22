@@ -5,8 +5,8 @@ import com.isaac.stock.representation.StockDataSetIterator;
 import org.ta4j.core.Bar;
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.indicators.CachedIndicator;
+import org.ta4j.core.num.DoubleNum;
 import org.ta4j.core.num.Num;
-import org.ta4j.core.num.PrecisionNum;
 
 public class DLDayOpenPriceIndicator extends CachedIndicator<Num> {
   private StockDataSetIterator stockDataSetIterator;
@@ -22,9 +22,9 @@ public class DLDayOpenPriceIndicator extends CachedIndicator<Num> {
     try {
       Bar bar = this.getBarSeries().getBar(index);
       StockData currentDayData = stockDataSetIterator.getStockDataReader().readOne(bar.getBeginTime().toLocalDateTime(), "D");
-      return PrecisionNum.valueOf(currentDayData.getData()[0]);
+      return DoubleNum.valueOf(currentDayData.getData()[0]);
     } catch (Exception e) {
-      return PrecisionNum.valueOf(Double.MIN_VALUE);
+      return DoubleNum.valueOf(Double.MIN_VALUE);
     }
   }
 }

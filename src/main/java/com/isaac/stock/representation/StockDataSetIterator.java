@@ -96,6 +96,14 @@ public class StockDataSetIterator implements DataSetIterator {
     return Arrays.copyOfRange(minArray, 0, OUT_VECTOR_SIZE);
   }
 
+  public double[] getMaxArray() {
+    return maxArray;
+  }
+
+  public double[] getMinArray() {
+    return minArray;
+  }
+
   @Override
   public DataSet next(int num) {
     if (exampleStartOffsets.size() == 0) throw new NoSuchElementException();

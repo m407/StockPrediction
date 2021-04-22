@@ -9,8 +9,8 @@ import org.nd4j.linalg.factory.Nd4j;
 import org.ta4j.core.Bar;
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.indicators.CachedIndicator;
+import org.ta4j.core.num.DoubleNum;
 import org.ta4j.core.num.Num;
-import org.ta4j.core.num.PrecisionNum;
 
 import java.util.List;
 
@@ -35,19 +35,27 @@ public class DLDayClosePriceIndicator extends CachedIndicator<Num> {
       StockData currentDayData = stockDataSetIterator.getStockDataReader().readOne(bar.getBeginTime().toLocalDateTime(), "D");
       INDArray testData = Nd4j.create(new int[]{StockPricePrediction.exampleLength, StockDataSetIterator.VECTOR_SIZE}, 'f');
       for (int i = 0; i < previosDayData.size(); i++) {
-        for (int j = 0; j < StockDataSetIterator.VECTOR_SIZE; j++) {
-          testData.putScalar(new int[]{i, j}, previosDayData.get(i).getData()[j]);
+        StockData stock = previosDayData.get(i);
+        for (int e = 0; e < StockDataSetIterator.VECTOR_SIZE; e++) {
+          testData.putScalar(
+                  new int[]{i, e},
+                  (stock.getData()[e] - stockDataSetIterator.getMinArray()[e]) /
+                          (stockDataSetIterator.getMaxArray()[e] - stockDataSetIterator.getMinArray()[e]));
         }
       }
+      INDArray max = Nd4j.create(stockDataSetIterator.getMaxLabelArray());
+      INDArray min = Nd4j.create(stockDataSetIterator.getMinLabelArray());
+
       predicts = net
               .rnnTimeStep(testData)
-              .getRow(StockPricePrediction.exampleLength);
+              .getRow(StockPricePrediction.exampleLength - 1)
+              .mul(max.sub(min)).add(min);
 
       double adjOpen = currentDayData.getData()[0];
       double adjClose = predicts.getDouble(3) + adjOpen - predicts.getDouble(0);
-      return PrecisionNum.valueOf(adjClose);
+      return DoubleNum.valueOf(adjClose);
     } catch (Exception e) {
-      return PrecisionNum.valueOf(Double.MIN_VALUE);
+      return DoubleNum.valueOf(Double.MIN_VALUE);
     }
   }
 }
