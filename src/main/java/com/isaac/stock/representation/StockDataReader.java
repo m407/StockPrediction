@@ -39,10 +39,8 @@ public class StockDataReader {
   public List<StockData> readAll() {
     List<StockData> stockDataList = new ArrayList<>();
     try {
-      Statement statement = connection.createStatement();
-
-      ResultSet rs = statement.executeQuery("SELECT * FROM \"" + ticker + "\";");
-      getAllStockData(stockDataList, statement, rs);
+      String query = "SELECT * FROM \"" + ticker + "\";";
+      getAllStockData(query);
     } catch (Exception e) {
       System.err.println(e.getClass().getName() + ": " + e.getMessage());
       e.printStackTrace();
@@ -51,12 +49,10 @@ public class StockDataReader {
   }
 
   public StockData readOne(LocalDateTime localDateTime, String period) throws Exception {
-    Statement statement = connection.createStatement();
-
-    ResultSet rs = statement.executeQuery("SELECT * FROM \"" + ticker + "\"" +
+    String query = "SELECT * FROM \"" + ticker + "\"" +
             " WHERE ticker='" + ticker + "' AND per='" + period + "'" +
-            " AND date='" + localDateTime.toLocalDate() + "'::DATE;");
-    return getSingleStockData(statement, rs);
+            " AND date='" + localDateTime.toLocalDate() + "'::DATE;";
+    return getSingleStockData(query);
   }
 
   public List<StockData> readClosestExample(LocalDateTime localDateTime, String period) throws Exception {
@@ -64,11 +60,11 @@ public class StockDataReader {
     try {
       Statement statement = connection.createStatement();
 
-      ResultSet rs = statement.executeQuery("SELECT * FROM \"" + ticker + "\"" +
+      String query = "SELECT * FROM \"" + ticker + "\"" +
               " WHERE ticker='" + ticker + "' AND per='" + period + "'" +
               " AND date<='" + localDateTime.toLocalDate() + "'::DATE" +
-              " LIMIT " + StockPricePrediction.exampleLength + ";");
-      getAllStockData(stockDataList, statement, rs);
+              " LIMIT " + StockPricePrediction.exampleLength + ";";
+      getAllStockData(query);
     } catch (Exception e) {
       System.err.println(e.getClass().getName() + ": " + e.getMessage());
       e.printStackTrace();
@@ -76,11 +72,14 @@ public class StockDataReader {
     return stockDataList;
   }
 
-  private void getAllStockData(List<StockData> stockDataList, Statement statement, ResultSet rs) throws SQLException {
+  private List<StockData> getAllStockData(String query) throws SQLException {
+    Statement statement = connection.createStatement();
+    ResultSet rs = statement.executeQuery(query);
+    List<StockData> stockDataList = new ArrayList<>();
     while (rs.next()) {
       vectorSize = rs.getMetaData().getColumnCount() - 4; // skip meta columns: date time per tiker
       double[] nums = new double[vectorSize];
-      for (int i = 0; i < vectorSize - 4; i++) {
+      for (int i = 0; i < vectorSize; i++) {
         nums[i] = rs.getDouble(i + 5);
       }
       stockDataList.add(new StockData(
@@ -92,14 +91,18 @@ public class StockDataReader {
     }
     rs.close();
     statement.close();
+    return stockDataList;
   }
 
-  private StockData getSingleStockData(Statement statement, ResultSet rs) throws Exception {
+  private StockData getSingleStockData(String query) throws Exception {
+    Statement statement = connection.createStatement();
+    ResultSet rs = statement.executeQuery(query);
+
     StockData stockData;
     if (rs.next()) {
       vectorSize = rs.getMetaData().getColumnCount() - 4; // skip meta columns: date time per tiker
       double[] nums = new double[vectorSize];
-      for (int i = 0; i < vectorSize - 4; i++) {
+      for (int i = 0; i < vectorSize; i++) {
         nums[i] = rs.getDouble(i + 5);
       }
       stockData = new StockData(
