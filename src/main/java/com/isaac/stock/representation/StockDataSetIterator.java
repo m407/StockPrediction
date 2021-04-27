@@ -40,6 +40,15 @@ public class StockDataSetIterator implements DataSetIterator {
    */
   private LinkedList<Integer> exampleStartOffsets = new LinkedList<>();
 
+  /**
+   * stock dataset for training
+   */
+  private List<StockData> trainData;
+  /**
+   * stock dataset for testing
+   */
+  private List<StockData> testData;
+
   public StockDataSetIterator(String ticker, int miniBatchSize, double splitRatio) {
     stockDataReader = new StockDataReader(ticker);
     List<StockData> stockDataList = stockDataReader.readAll();
@@ -49,18 +58,22 @@ public class StockDataSetIterator implements DataSetIterator {
     this.miniBatchSize = miniBatchSize;
     this.exampleLength = StockPricePrediction.exampleLength;
     this.split = (int) Math.round(stockDataList.size() * splitRatio);
-    train = stockDataList.subList(0, split);
-    test = generateTestDataSet(stockDataList.subList(split, stockDataList.size()));
+    trainData = stockDataList.subList(0, split);
+    testData = stockDataList.subList(split, stockDataList.size());
+    test = generateTestDataSet(testData);
     initializeOffsets();
   }
 
-  /**
-   * stock dataset for training
-   */
-  private List<StockData> train;
+  public List<StockData> getTestData() {
+    return testData;
+  }
 
-  public LocalDateTime getLastDate() {
-    return train.get(train.size() - 1).getDate();
+  public LocalDateTime getTestFirstDay() {
+    return testData.get(exampleLength).getDate();
+  }
+
+  public LocalDateTime getTestLastDay() {
+    return testData.get(testData.size() - 1).getDate();
   }
 
 
@@ -79,7 +92,7 @@ public class StockDataSetIterator implements DataSetIterator {
   private void initializeOffsets() {
     exampleStartOffsets.clear();
     int window = exampleLength + predictLength;
-    for (int i = 0; i < train.size() - window; i++) {
+    for (int i = 0; i < trainData.size() - window; i++) {
       exampleStartOffsets.add(i);
     }
   }
@@ -114,14 +127,14 @@ public class StockDataSetIterator implements DataSetIterator {
     for (int index = 0; index < actualMiniBatchSize; index++) {
       int startIdx = exampleStartOffsets.removeFirst();
       int endIdx = startIdx + exampleLength;
-      StockData curData = train.get(startIdx);
+      StockData curData = trainData.get(startIdx);
       StockData nextData;
       for (int i = startIdx; i < endIdx; i++) {
         int c = i - startIdx;
         for (int e = 0; e < VECTOR_SIZE; e++) {
           input.putScalar(new int[]{index, e, c}, (curData.getData()[e] - minArray[e]) / (maxArray[e] - minArray[e]));
         }
-        nextData = train.get(i + 1);
+        nextData = trainData.get(i + 1);
 
         for (int e = 0; e < OUT_VECTOR_SIZE; e++) {
           label.putScalar(new int[]{index, e, c}, (nextData.getData()[e] - minArray[e]) / (maxArray[e] - minArray[e]));
@@ -161,7 +174,7 @@ public class StockDataSetIterator implements DataSetIterator {
 
   @Override
   public int totalExamples() {
-    return train.size() - exampleLength - predictLength;
+    return trainData.size() - exampleLength - predictLength;
   }
 
   @Override
@@ -235,7 +248,7 @@ public class StockDataSetIterator implements DataSetIterator {
       minArray[i] = Double.MAX_VALUE;
     }
 
-    train.forEach(stockData -> {
+    trainData.forEach(stockData -> {
       for (int i = 0; i < VECTOR_SIZE - 4; i++) {
         if (stockData.getData()[i] > maxArray[i]) maxArray[i] = stockData.getData()[i];
         if (stockData.getData()[i] < minArray[i]) minArray[i] = stockData.getData()[i];

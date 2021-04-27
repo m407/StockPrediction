@@ -40,7 +40,7 @@ public class StockDataReader {
     List<StockData> stockDataList = new ArrayList<>();
     try {
       String query = "SELECT * FROM \"" + ticker + "\";";
-      getAllStockData(query);
+      stockDataList = getAllStockData(query);
     } catch (Exception e) {
       System.err.println(e.getClass().getName() + ": " + e.getMessage());
       e.printStackTrace();
@@ -64,7 +64,7 @@ public class StockDataReader {
               " WHERE ticker='" + ticker + "' AND per='" + period + "'" +
               " AND date<='" + localDateTime.toLocalDate() + "'::DATE" +
               " LIMIT " + StockPricePrediction.exampleLength + ";";
-      getAllStockData(query);
+      stockDataList = getAllStockData(query);
     } catch (Exception e) {
       System.err.println(e.getClass().getName() + ": " + e.getMessage());
       e.printStackTrace();

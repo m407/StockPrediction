@@ -70,7 +70,7 @@ public class StockPricePrediction {
       log.info("Testing...");
       currentModelRating = getModelRating(net, test, max, min);
       if (Boolean.parseBoolean(System.getProperty("plot"))) {
-        predictAllCategories(net, test, max, min, multiLayerNetworkFileName, iterator.getLastDate().plusDays(1));
+        predictAllCategories(net, iterator, max, min, multiLayerNetworkFileName, iterator.getTestFirstDay());
       }
       if (Boolean.parseBoolean(System.getProperty("demoTrade"))) {
         StockDataReader stockDataReader = new StockDataReader("RI.RTSI.10");
@@ -79,7 +79,11 @@ public class StockPricePrediction {
         BarSeries barSeries = barSeriesBuilder
                 .withName("RI.RTSI.10")
                 .withBars(stockData.stream()
-                        .filter(item -> item.getDate().getYear() >= 2021 && item.getDate().getMonthValue() == 2)
+                        .filter(item -> (item.getDate().isAfter(iterator.getTestFirstDay()) ||
+                                item.getDate().isEqual(iterator.getTestFirstDay())) &&
+                                (item.getDate().isBefore(iterator.getTestLastDay()) ||
+                                        item.getDate().isEqual(iterator.getTestLastDay()))
+                        )
                         .map(item -> new BaseBar(
                                 Duration.ofMinutes(10),
                                 ZonedDateTime.ofLocal(item.getDate(), ZoneId.systemDefault(), ZoneOffset.UTC),
@@ -166,18 +170,18 @@ public class StockPricePrediction {
   /**
    * Predict all the features (open, close, low, high prices and volume) of a stock one-day ahead
    */
-  private static void predictAllCategories(MultiLayerNetwork net, List<Pair<INDArray, INDArray>> testData, INDArray max, INDArray min, String ticker, LocalDateTime startDate) {
-    INDArray[] predicts = new INDArray[testData.size()];
-    INDArray[] actuals = new INDArray[testData.size()];
-    for (int i = 0; i < testData.size(); i++) {
-      predicts[i] = net.rnnTimeStep(testData.get(i).getKey()).getRow(exampleLength - 1).mul(max.sub(min)).add(min);
-      actuals[i] = testData.get(i).getValue();
+  private static void predictAllCategories(MultiLayerNetwork net, StockDataSetIterator iterator, INDArray max, INDArray min, String ticker, LocalDateTime startDate) {
+    INDArray[] predicts = new INDArray[iterator.getTestDataSet().size()];
+    INDArray[] actuals = new INDArray[iterator.getTestDataSet().size()];
+    for (int i = 0; i < iterator.getTestDataSet().size(); i++) {
+      predicts[i] = net.rnnTimeStep(iterator.getTestDataSet().get(i).getKey()).getRow(exampleLength - 1).mul(max.sub(min)).add(min);
+      actuals[i] = iterator.getTestDataSet().get(i).getValue();
     }
     log.info("Print out Predictions and Actual Values...");
     log.info("Predict\tActual");
     for (int i = 0; i < predicts.length; i++) log.info(predicts[i] + "\t" + actuals[i]);
     log.info("Plot...");
-    PlotUtil.plot(predicts, actuals, ticker, startDate);
+    PlotUtil.plot(predicts, actuals, iterator, ticker);
   }
 
 }

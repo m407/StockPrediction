@@ -1,5 +1,8 @@
 package com.isaac.stock.utils;
 
+import com.isaac.stock.predict.StockPricePrediction;
+import com.isaac.stock.representation.StockDataReader;
+import com.isaac.stock.representation.StockDataSetIterator;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -9,6 +12,7 @@ import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.ui.ApplicationFrame;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.Hour;
+import org.jfree.data.time.Minute;
 import org.jfree.data.time.ohlc.OHLCSeries;
 import org.jfree.data.time.ohlc.OHLCSeriesCollection;
 import org.nd4j.linalg.api.ndarray.INDArray;
@@ -19,6 +23,7 @@ import org.ta4j.core.num.Num;
 
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Date;
 
 /**
@@ -64,17 +69,38 @@ public class PlotUtil {
     frame.setVisible(true);
   }
 
-  public static void plot(INDArray[] predicts, INDArray[] actuals, String name, LocalDateTime startDate) {
+  public static void plot(INDArray[] predicts, INDArray[] actuals, StockDataSetIterator iterator, String name) {
     /*
      * Getting bar series
      */
+    LocalDateTime startDate = iterator.getTestFirstDay();
+    LocalDateTime endDate = iterator.getTestLastDay();
+    StockDataReader stockDataReader = new StockDataReader("RI.RTSI.10");
+
     OHLCSeries predictsSeries = new OHLCSeries(name + "_predicts");
     OHLCSeries adjustedSeries = new OHLCSeries(name + "_p_adjusted");
     OHLCSeries actualsSeries = new OHLCSeries(name + "_actuals");
+    OHLCSeries m10Series = new OHLCSeries(name + "_m10");
+    stockDataReader
+            .readAll()
+            .stream()
+            .filter(item -> (item.getDate().isAfter(startDate) ||
+                    item.getDate().isEqual(startDate)) &&
+                    (item.getDate().isBefore(endDate) ||
+                            item.getDate().isEqual(endDate))
+            )
+            .forEachOrdered(item -> m10Series.add(
+                    new Minute(Date.from(item.getDate().toInstant(ZoneOffset.UTC))),
+                    item.getData()[0],
+                    item.getData()[1],
+                    item.getData()[2],
+                    item.getData()[3]
+            ));
 
     for (int i = 0; i < predicts.length; i++) {
+      LocalDateTime stockDate = iterator.getTestData().get(StockPricePrediction.exampleLength + i).getDate();
       predictsSeries.add(
-              new Hour(0, startDate.plusDays(i).getDayOfMonth(), startDate.plusDays(i).getMonthValue(), startDate.plusDays(i).getYear()),
+              new Hour(Date.from(stockDate.plusHours(-2).toInstant(ZoneOffset.UTC))),
               predicts[i].getDouble(0),
               predicts[i].getDouble(1),
               predicts[i].getDouble(2),
@@ -85,7 +111,7 @@ public class PlotUtil {
       double adjLow = predicts[i].getDouble(2) + adjOpen - predicts[i].getDouble(0);
       double adjClose = predicts[i].getDouble(3) + adjOpen - predicts[i].getDouble(0);
       adjustedSeries.add(
-              new Hour(3, startDate.plusDays(i).getDayOfMonth(), startDate.plusDays(i).getMonthValue(), startDate.plusDays(i).getYear()),
+              new Hour(Date.from(stockDate.toInstant(ZoneOffset.UTC))),
               adjOpen,
               adjHigh,
               adjLow,
@@ -97,7 +123,7 @@ public class PlotUtil {
       double actLow = actuals[i].getDouble(2);
       double actClose = actuals[i].getDouble(3);
       actualsSeries.add(
-              new Hour(6, startDate.plusDays(i).getDayOfMonth(), startDate.plusDays(i).getMonthValue(), startDate.plusDays(i).getYear()),
+              new Hour(Date.from(stockDate.plusHours(2).toInstant(ZoneOffset.UTC))),
               actOpen,
               actHigh,
               actLow,
@@ -106,6 +132,7 @@ public class PlotUtil {
     }
 
     OHLCSeriesCollection dataset = new OHLCSeriesCollection();
+    dataset.addSeries(m10Series);
     dataset.addSeries(predictsSeries);
     dataset.addSeries(adjustedSeries);
     dataset.addSeries(actualsSeries);
