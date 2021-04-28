@@ -8,7 +8,6 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.ui.ApplicationFrame;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.Hour;
@@ -143,7 +142,6 @@ public class PlotUtil {
     JFreeChart jfreechart = ChartFactory.createCandlestickChart(name, "Time", "Value", dataset, true);
     XYPlot plot = (XYPlot) jfreechart.getPlot();
     DateAxis axis = (DateAxis) plot.getDomainAxis();
-    XYItemRenderer renderer = plot.getRenderer();
     axis.setDateFormatOverride(new SimpleDateFormat("yyyy-MM-dd"));
 
     /*

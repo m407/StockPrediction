@@ -20,7 +20,10 @@ import org.ta4j.core.BaseBarSeriesBuilder;
 
 import java.io.File;
 import java.io.IOException;
-import java.time.*;
+import java.time.Duration;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -70,7 +73,7 @@ public class StockPricePrediction {
       log.info("Testing...");
       currentModelRating = getModelRating(net, test, max, min);
       if (Boolean.parseBoolean(System.getProperty("plot"))) {
-        predictAllCategories(net, iterator, max, min, multiLayerNetworkFileName, iterator.getTestFirstDay());
+        predictAllCategories(net, iterator, multiLayerNetworkFileName);
       }
       if (Boolean.parseBoolean(System.getProperty("demoTrade"))) {
         StockDataReader stockDataReader = new StockDataReader("RI.RTSI.10");
@@ -170,9 +173,11 @@ public class StockPricePrediction {
   /**
    * Predict all the features (open, close, low, high prices and volume) of a stock one-day ahead
    */
-  private static void predictAllCategories(MultiLayerNetwork net, StockDataSetIterator iterator, INDArray max, INDArray min, String ticker, LocalDateTime startDate) {
+  private static void predictAllCategories(MultiLayerNetwork net, StockDataSetIterator iterator, String ticker) {
     INDArray[] predicts = new INDArray[iterator.getTestDataSet().size()];
     INDArray[] actuals = new INDArray[iterator.getTestDataSet().size()];
+    INDArray max = Nd4j.create(iterator.getMaxLabelArray());
+    INDArray min = Nd4j.create(iterator.getMinLabelArray());
     for (int i = 0; i < iterator.getTestDataSet().size(); i++) {
       predicts[i] = net.rnnTimeStep(iterator.getTestDataSet().get(i).getKey()).getRow(exampleLength - 1).mul(max.sub(min)).add(min);
       actuals[i] = iterator.getTestDataSet().get(i).getValue();
