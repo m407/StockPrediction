@@ -6,6 +6,8 @@ import org.ta4j.core.*;
 import org.ta4j.core.analysis.criteria.pnl.GrossProfitCriterion;
 import org.ta4j.core.analysis.criteria.pnl.GrossReturnCriterion;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
+import org.ta4j.core.indicators.helpers.HighPriceIndicator;
+import org.ta4j.core.indicators.helpers.LowPriceIndicator;
 import org.ta4j.core.indicators.helpers.OpenPriceIndicator;
 import org.ta4j.core.num.DoubleNum;
 import org.ta4j.core.rules.*;
@@ -18,27 +20,29 @@ public class DLStrategy {
 
     OpenPriceIndicator openPriceIndicator = new OpenPriceIndicator(series);
     ClosePriceIndicator closePriceIndicator = new ClosePriceIndicator(series);
-    DLDayOpenPriceIndicator dlDayOpenPriceIndicatior = new DLDayOpenPriceIndicator(stockDataSetIterator, series);
-    DLDayClosePriceIndicator dlDayClosePriceIndicatior = new DLDayClosePriceIndicator(net, stockDataSetIterator, series);
+    LowPriceIndicator lowPriceIndicator = new LowPriceIndicator(series);
+    HighPriceIndicator highPriceIndicator = new HighPriceIndicator(series);
+    DLDayBarPriceIndicator dlDayBarPriceIndicator = new DLDayBarPriceIndicator(net, stockDataSetIterator, series);
+    DLDayOpenPriceIndicator dlDayOpenPriceIndicatior = new DLDayOpenPriceIndicator(dlDayBarPriceIndicator, series);
+    DLDayClosePriceIndicator dlDayClosePriceIndicatior = new DLDayClosePriceIndicator(dlDayBarPriceIndicator, series);
+
+    DLBuyEnterIndicator dlBuyEnterIndicator = new DLBuyEnterIndicator(dlDayBarPriceIndicator, series, 0.318);
+    DLBuyExitIndicator dlBuyExitIndicator = new DLBuyExitIndicator(dlDayBarPriceIndicator, series, 0.318);
 
     // Entry rule
-    Rule entryRule = new AndRule(
-            new BooleanIndicatorRule(new TradeTimeIndicator(series)),
-            new OverIndicatorRule(dlDayClosePriceIndicatior, dlDayOpenPriceIndicatior)
-                    .and(new OrRule(
-                                    new CrossedDownIndicatorRule(openPriceIndicator, dlDayOpenPriceIndicatior),
-                                    new UnderIndicatorRule(closePriceIndicator, dlDayOpenPriceIndicatior)
-                            )
-                    )// Trend
-    );
+    Rule entryRule = new BooleanIndicatorRule(new TradeTimeIndicator(series)) // Время торговли
+            .and(new OverIndicatorRule(dlDayClosePriceIndicatior, dlDayOpenPriceIndicatior))
+            .and(new OrRule(
+                    new UnderIndicatorRule(lowPriceIndicator, dlBuyEnterIndicator),
+                    new UnderIndicatorRule(closePriceIndicator, dlBuyEnterIndicator)
+            )
+                    .or(new UnderIndicatorRule(openPriceIndicator, dlBuyEnterIndicator))
+                    .or(new UnderIndicatorRule(highPriceIndicator, dlBuyEnterIndicator)));
 
     // Exit rule
     Rule exitRule = new NotRule(new BooleanIndicatorRule(new TradeTimeIndicator(series)))
-            .or(
-                    new CrossedUpIndicatorRule(closePriceIndicator, dlDayClosePriceIndicatior) // Trend
-                            .or(new TrailingStopLossRule(closePriceIndicator, DoubleNum.valueOf(0.5), 2)) // Signal 1
-
-            );
+            .or(new OverIndicatorRule(highPriceIndicator, dlBuyExitIndicator))
+            .or(new TrailingStopLossRule(closePriceIndicator, DoubleNum.valueOf(0.5), 2)); // Signal 1
 
     return new BaseStrategy(entryRule, exitRule);
   }

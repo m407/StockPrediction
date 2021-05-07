@@ -145,7 +145,7 @@ public class StockPricePrediction {
       actuals[i] = testData.get(i).getValue();
 
       adjOpen = actuals[i].getDouble(0);
-      adjClose = predicts[i].getDouble(2) + actuals[i].getDouble(0) - predicts[i].getDouble(0);
+      adjClose = predicts[i].getDouble(3) + actuals[i].getDouble(0) - predicts[i].getDouble(0);
       actOpen = actuals[i].getDouble(0);
       actClose = actuals[i].getDouble(3);
 
