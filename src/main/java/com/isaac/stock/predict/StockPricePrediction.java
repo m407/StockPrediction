@@ -137,6 +137,8 @@ public class StockPricePrediction {
     int overlapTotalCount = 0;
     double adjOpen;
     double adjClose;
+    double adjHigh;
+    double adjLow;
     double actOpen;
     double actClose;
 
@@ -144,8 +146,10 @@ public class StockPricePrediction {
       predicts[i] = net.rnnTimeStep(testData.get(i).getKey()).getRow(exampleLength - 1).mul(max.sub(min)).add(min);
       actuals[i] = testData.get(i).getValue();
 
+      double offset = actuals[i].getDouble(0) - predicts[i].getDouble(0);
+
       adjOpen = actuals[i].getDouble(0);
-      adjClose = predicts[i].getDouble(3) + actuals[i].getDouble(0) - predicts[i].getDouble(0);
+      adjClose = predicts[i].getDouble(3) + offset;
       actOpen = actuals[i].getDouble(0);
       actClose = actuals[i].getDouble(3);
 

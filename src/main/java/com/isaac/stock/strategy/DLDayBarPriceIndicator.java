@@ -43,8 +43,8 @@ public class DLDayBarPriceIndicator extends CachedIndicator<Bar> {
         predicts = net.rnnTimeStep(stockDataSetIterator.getTestDataSet().get(i).getKey()).getRow(StockPricePrediction.exampleLength - 1).mul(max.sub(min)).add(min);
         actuals = stockDataSetIterator.getTestDataSet().get(i).getValue();
         adjOpen = actuals.getDouble(0);
-        adjHigh = predicts.getDouble(1) + adjOpen - predicts.getDouble(0);
-        adjLow = predicts.getDouble(2) + adjOpen - predicts.getDouble(0);
+        adjHigh = predicts.getDouble(0) > predicts.getDouble(1) ? predicts.getDouble(0) : predicts.getDouble(1);
+        adjLow = predicts.getDouble(0) > predicts.getDouble(1) ? predicts.getDouble(1) : predicts.getDouble(0);
         adjClose = predicts.getDouble(3) + adjOpen - predicts.getDouble(0);
         res = new BaseBar(
                 Duration.ofDays(1),

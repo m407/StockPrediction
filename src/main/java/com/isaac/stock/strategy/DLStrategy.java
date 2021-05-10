@@ -26,8 +26,8 @@ public class DLStrategy {
     DLDayOpenPriceIndicator dlDayOpenPriceIndicatior = new DLDayOpenPriceIndicator(dlDayBarPriceIndicator, series);
     DLDayClosePriceIndicator dlDayClosePriceIndicatior = new DLDayClosePriceIndicator(dlDayBarPriceIndicator, series);
 
-    DLBuyEnterIndicator dlBuyEnterIndicator = new DLBuyEnterIndicator(dlDayBarPriceIndicator, series, 0.318);
-    DLBuyExitIndicator dlBuyExitIndicator = new DLBuyExitIndicator(dlDayBarPriceIndicator, series, 0.318);
+    DLBuyEnterIndicator dlBuyEnterIndicator = new DLBuyEnterIndicator(dlDayBarPriceIndicator, series, 0.618);
+    DLBuyExitIndicator dlBuyExitIndicator = new DLBuyExitIndicator(dlDayBarPriceIndicator, series, 0.382);
 
     // Entry rule
     Rule entryRule = new BooleanIndicatorRule(new TradeTimeIndicator(series)) // Время торговли
@@ -53,7 +53,7 @@ public class DLStrategy {
 
     // Running the strategy
     BarSeriesManager seriesManager = new BarSeriesManager(series);
-    TradingRecord tradingRecord = seriesManager.run(strategy, Trade.TradeType.BUY);
+    TradingRecord tradingRecord = seriesManager.run(strategy, Trade.TradeType.SELL);
 
     GrossReturnCriterion totalReturn = new GrossReturnCriterion();
     GrossProfitCriterion grossProfit = new GrossProfitCriterion();

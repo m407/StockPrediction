@@ -20,7 +20,7 @@ import java.util.*;
 public class StockDataSetIterator implements DataSetIterator {
 
   public static int VECTOR_SIZE; // number of features for a stock data
-  public static final int OUT_VECTOR_SIZE = 4; // number of features to predict
+  public static final int OUT_VECTOR_SIZE = 2; // number of features to predict
   private int miniBatchSize; // mini-batch size
   private int exampleLength; // default 22, say, 22 working days per month
   private int predictLength = 1; // default 1, say, one day ahead prediction
@@ -136,9 +136,8 @@ public class StockDataSetIterator implements DataSetIterator {
         }
         nextData = trainData.get(i + 1);
 
-        for (int e = 0; e < OUT_VECTOR_SIZE; e++) {
-          label.putScalar(new int[]{index, e, c}, (nextData.getData()[e] - minArray[e]) / (maxArray[e] - minArray[e]));
-        }
+        label.putScalar(new int[]{index, 0, c}, (nextData.getData()[0] - minArray[0]) / (maxArray[0] - minArray[0]));
+        label.putScalar(new int[]{index, 1, c}, (nextData.getData()[3] - minArray[1]) / (maxArray[1] - minArray[1]));
 
         curData = nextData;
       }
@@ -162,9 +161,8 @@ public class StockDataSetIterator implements DataSetIterator {
         }
       }
       StockData stock = stockDataList.get(index + exampleLength);
-      for (int e = 0; e < OUT_VECTOR_SIZE; e++) {
-        label.putScalar(new int[]{e}, stock.getData()[e]);
-      }
+      label.putScalar(new int[]{0}, stock.getData()[0]);
+      label.putScalar(new int[]{1}, stock.getData()[3]);
 
       test.add(new Pair<>(input, label));
     }
@@ -249,7 +247,7 @@ public class StockDataSetIterator implements DataSetIterator {
     }
 
     trainData.forEach(stockData -> {
-      for (int i = 0; i < VECTOR_SIZE - 4; i++) {
+      for (int i = 0; i < VECTOR_SIZE; i++) {
         if (stockData.getData()[i] > maxArray[i]) maxArray[i] = stockData.getData()[i];
         if (stockData.getData()[i] < minArray[i]) minArray[i] = stockData.getData()[i];
       }

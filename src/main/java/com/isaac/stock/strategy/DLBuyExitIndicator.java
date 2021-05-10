@@ -21,8 +21,8 @@ public class DLBuyExitIndicator extends CachedIndicator<Num> {
     Bar bar = dlDayBarPriceIndicator.getValue(index);
     if (bar.getClosePrice().isGreaterThanOrEqual(bar.getOpenPrice())) {
       return bar
-              .getHighPrice()
-              .minus(bar.getClosePrice())
+              .getClosePrice()
+              .minus(bar.getOpenPrice())
               .multipliedBy(DoubleNum.valueOf(threshhold))
               .plus(bar.getClosePrice());
 
