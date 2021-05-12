@@ -98,17 +98,22 @@ public class PlotUtil {
 
     for (int i = 0; i < predicts.length; i++) {
       LocalDateTime stockDate = iterator.getTestData().get(StockPricePrediction.exampleLength + i).getDate();
+      double predictsOpen = predicts[i].getDouble(0);
+      double predictsClose = predicts[i].getDouble(1);
+      double predictsHigh = predictsOpen > predictsClose ? predictsOpen : predictsClose;
+      double predictsLow = predictsOpen > predictsClose ? predictsClose : predictsOpen;
+
       predictsSeries.add(
               new Hour(Date.from(stockDate.plusHours(-2).toInstant(ZoneOffset.UTC))),
-              predicts[i].getDouble(0),
-              predicts[i].getDouble(1),
-              predicts[i].getDouble(2),
-              predicts[i].getDouble(3)
+              predictsOpen,
+              predictsHigh,
+              predictsLow,
+              predictsClose
       );
       double adjOpen = actuals[i].getDouble(0);
-      double adjHigh = predicts[i].getDouble(1) + adjOpen - predicts[i].getDouble(0);
-      double adjLow = predicts[i].getDouble(2) + adjOpen - predicts[i].getDouble(0);
-      double adjClose = predicts[i].getDouble(3) + adjOpen - predicts[i].getDouble(0);
+      double adjHigh = predictsHigh + adjOpen - predictsOpen;
+      double adjLow = predictsLow + adjOpen - predictsOpen;
+      double adjClose = predictsClose + adjOpen - predictsOpen;
       adjustedSeries.add(
               new Hour(Date.from(stockDate.toInstant(ZoneOffset.UTC))),
               adjOpen,
@@ -118,9 +123,9 @@ public class PlotUtil {
       );
 
       double actOpen = actuals[i].getDouble(0);
-      double actHigh = actuals[i].getDouble(1);
-      double actLow = actuals[i].getDouble(2);
-      double actClose = actuals[i].getDouble(3);
+      double actClose = actuals[i].getDouble(1);
+      double actHigh = actOpen > actClose ? actOpen : actClose;
+      double actLow = actOpen > actClose ? actClose : actOpen;
       actualsSeries.add(
               new Hour(Date.from(stockDate.plusHours(2).toInstant(ZoneOffset.UTC))),
               actOpen,

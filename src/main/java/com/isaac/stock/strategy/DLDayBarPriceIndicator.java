@@ -45,7 +45,7 @@ public class DLDayBarPriceIndicator extends CachedIndicator<Bar> {
         adjOpen = actuals.getDouble(0);
         adjHigh = predicts.getDouble(0) > predicts.getDouble(1) ? predicts.getDouble(0) : predicts.getDouble(1);
         adjLow = predicts.getDouble(0) > predicts.getDouble(1) ? predicts.getDouble(1) : predicts.getDouble(0);
-        adjClose = predicts.getDouble(3) + adjOpen - predicts.getDouble(0);
+        adjClose = predicts.getDouble(1) + adjOpen - predicts.getDouble(0);
         res = new BaseBar(
                 Duration.ofDays(1),
                 ZonedDateTime.of(bar.getBeginTime().toLocalDate().atTime(0, 0), ZoneId.of("UTC")),

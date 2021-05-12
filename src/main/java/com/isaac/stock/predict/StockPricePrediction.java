@@ -137,8 +137,6 @@ public class StockPricePrediction {
     int overlapTotalCount = 0;
     double adjOpen;
     double adjClose;
-    double adjHigh;
-    double adjLow;
     double actOpen;
     double actClose;
 
@@ -149,9 +147,9 @@ public class StockPricePrediction {
       double offset = actuals[i].getDouble(0) - predicts[i].getDouble(0);
 
       adjOpen = actuals[i].getDouble(0);
-      adjClose = predicts[i].getDouble(3) + offset;
+      adjClose = predicts[i].getDouble(1) + offset;
       actOpen = actuals[i].getDouble(0);
-      actClose = actuals[i].getDouble(3);
+      actClose = actuals[i].getDouble(1);
 
       overlapRange = Math.max(adjOpen, adjClose) > Math.min(actOpen, actClose) && Math.min(adjOpen, adjClose) < Math.max(actOpen, actClose) ?
               Math.min(Math.max(adjOpen, adjClose), Math.max(actOpen, actClose)) -
