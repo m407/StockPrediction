@@ -53,7 +53,7 @@ public class DLStrategy {
 
     // Running the strategy
     BarSeriesManager seriesManager = new BarSeriesManager(series);
-    TradingRecord tradingRecord = seriesManager.run(strategy, Trade.TradeType.SELL);
+    TradingRecord tradingRecord = seriesManager.run(strategy, Trade.TradeType.BUY);
 
     GrossReturnCriterion totalReturn = new GrossReturnCriterion();
     GrossProfitCriterion grossProfit = new GrossProfitCriterion();

@@ -38,9 +38,10 @@ public class DLDayBarPriceIndicator extends CachedIndicator<Bar> {
     INDArray max = Nd4j.create(stockDataSetIterator.getMaxLabelArray());
     INDArray min = Nd4j.create(stockDataSetIterator.getMinLabelArray());
 
-    for (int i = 0; i < stockDataSetIterator.getTestData().size(); i++) {
+    for (int i = 0; i < stockDataSetIterator.getTestData().size() - StockPricePrediction.exampleLength; i++) {
       if (stockDataSetIterator.getTestData().get(i + StockPricePrediction.exampleLength).getDate().toLocalDate().isEqual(bar.getEndTime().toLocalDate())) {
         predicts = net.rnnTimeStep(stockDataSetIterator.getTestDataSet().get(i).getKey()).getRow(StockPricePrediction.exampleLength - 1).mul(max.sub(min)).add(min);
+        net.rnnClearPreviousState();
         actuals = stockDataSetIterator.getTestDataSet().get(i).getValue();
         adjOpen = actuals.getDouble(0);
         adjHigh = predicts.getDouble(0) > predicts.getDouble(1) ? predicts.getDouble(0) : predicts.getDouble(1);

@@ -69,11 +69,13 @@ public class StockDataSetIterator implements DataSetIterator {
   }
 
   public LocalDateTime getTestFirstDay() {
-    return testData.get(exampleLength).getDate();
+    return LocalDateTime.of(2020, 11, 2, 0, 0);
+//    return testData.get(exampleLength).getDate();
   }
 
   public LocalDateTime getTestLastDay() {
-    return testData.get(testData.size() - 1).getDate();
+    return LocalDateTime.of(2020, 11, 2, 0, 0).plusHours(24);
+//    return testData.get(testData.size() - 1).getDate().plusHours(24);
   }
 
 

@@ -72,8 +72,10 @@ public class StockPricePrediction {
       net.setListeners(new ScoreIterationListener(100));
       log.info("Testing...");
       currentModelRating = getModelRating(net, test, max, min);
+      net.rnnClearPreviousState();
       if (Boolean.parseBoolean(System.getProperty("plot"))) {
         predictAllCategories(net, iterator, multiLayerNetworkFileName);
+        net.rnnClearPreviousState();
       }
       if (Boolean.parseBoolean(System.getProperty("demoTrade"))) {
         StockDataReader stockDataReader = new StockDataReader("RI.RTSI.10");
