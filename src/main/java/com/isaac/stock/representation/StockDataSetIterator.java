@@ -19,11 +19,12 @@ import java.util.*;
  */
 public class StockDataSetIterator implements DataSetIterator {
 
-  public static int VECTOR_SIZE; // number of features for a stock data
-  public static final int OUT_VECTOR_SIZE = 2; // number of features to predict
+  private final int OUT_VECTOR_SIZE = 2; // number of features to predict
+  private final int predictLength = 1; // default 1, say, one day ahead prediction
   private int miniBatchSize; // mini-batch size
+
   private int exampleLength; // default 22, say, 22 working days per month
-  private int predictLength = 1; // default 1, say, one day ahead prediction
+  private int VECTOR_SIZE; // number of features for a stock data
   private StockDataReader stockDataReader;
   /**
    * minimal values of each feature in stock dataset
@@ -52,16 +53,24 @@ public class StockDataSetIterator implements DataSetIterator {
   public StockDataSetIterator(String ticker, int miniBatchSize, double splitRatio) {
     stockDataReader = new StockDataReader(ticker);
     List<StockData> stockDataList = stockDataReader.readAll();
-    StockDataSetIterator.VECTOR_SIZE = stockDataReader.getVectorSize();
+    this.VECTOR_SIZE = stockDataReader.getVectorSize();
     this.maxArray = new double[stockDataReader.getVectorSize()];
     this.minArray = new double[stockDataReader.getVectorSize()];
     this.miniBatchSize = miniBatchSize;
     this.exampleLength = StockPricePrediction.exampleLength;
     this.split = (int) Math.round(stockDataList.size() * splitRatio);
     trainData = stockDataList.subList(0, split);
-    testData = stockDataList.subList(split, stockDataList.size());
-    test = generateTestDataSet(testData);
+    testData = stockDataList.subList(split + exampleLength, stockDataList.size() - predictLength);
+    test = generateTestDataSet(stockDataList.subList(split, stockDataList.size()));
     initializeOffsets();
+  }
+
+  public int getExampleLength() {
+    return exampleLength;
+  }
+
+  public int getPredictLength() {
+    return predictLength;
   }
 
   public List<StockData> getTestData() {
@@ -69,13 +78,13 @@ public class StockDataSetIterator implements DataSetIterator {
   }
 
   public LocalDateTime getTestFirstDay() {
-    return LocalDateTime.of(2020, 11, 2, 0, 0);
-//    return testData.get(exampleLength).getDate();
+//    return LocalDateTime.of(2020, 11, 2, 0, 0);
+    return testData.get(exampleLength).getDate();
   }
 
   public LocalDateTime getTestLastDay() {
-    return LocalDateTime.of(2020, 11, 2, 0, 0).plusHours(24);
-//    return testData.get(testData.size() - 1).getDate().plusHours(24);
+//    return LocalDateTime.of(2020, 11, 2, 0, 0).plusHours(24);
+    return testData.get(testData.size() - 1).getDate().plusHours(24);
   }
 
 

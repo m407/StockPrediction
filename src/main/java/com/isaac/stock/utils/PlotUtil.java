@@ -1,6 +1,5 @@
 package com.isaac.stock.utils;
 
-import com.isaac.stock.predict.StockPricePrediction;
 import com.isaac.stock.representation.StockDataReader;
 import com.isaac.stock.representation.StockDataSetIterator;
 import org.jfree.chart.ChartFactory;
@@ -97,7 +96,7 @@ public class PlotUtil {
             ));
 
     for (int i = 0; i < predicts.length; i++) {
-      LocalDateTime stockDate = iterator.getTestData().get(StockPricePrediction.exampleLength + i).getDate();
+      LocalDateTime stockDate = iterator.getTestData().get(i).getDate();
       double predictsOpen = predicts[i].getDouble(0);
       double predictsClose = predicts[i].getDouble(1);
       double predictsHigh = predictsOpen > predictsClose ? predictsOpen : predictsClose;

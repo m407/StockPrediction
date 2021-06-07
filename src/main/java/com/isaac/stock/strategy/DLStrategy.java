@@ -1,7 +1,5 @@
 package com.isaac.stock.strategy;
 
-import com.isaac.stock.representation.StockDataSetIterator;
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.ta4j.core.*;
 import org.ta4j.core.analysis.criteria.pnl.GrossProfitCriterion;
 import org.ta4j.core.analysis.criteria.pnl.GrossReturnCriterion;
@@ -13,7 +11,7 @@ import org.ta4j.core.num.DoubleNum;
 import org.ta4j.core.rules.*;
 
 public class DLStrategy {
-  public static Strategy buildStrategy(MultiLayerNetwork net, StockDataSetIterator stockDataSetIterator, BarSeries series) {
+  public static Strategy buildStrategy(BarSeries predictSeries, BarSeries series) {
     if (series == null) {
       throw new IllegalArgumentException("Series cannot be null");
     }
@@ -22,7 +20,7 @@ public class DLStrategy {
     ClosePriceIndicator closePriceIndicator = new ClosePriceIndicator(series);
     LowPriceIndicator lowPriceIndicator = new LowPriceIndicator(series);
     HighPriceIndicator highPriceIndicator = new HighPriceIndicator(series);
-    DLDayBarPriceIndicator dlDayBarPriceIndicator = new DLDayBarPriceIndicator(net, stockDataSetIterator, series);
+    DLDayBarPriceIndicator dlDayBarPriceIndicator = new DLDayBarPriceIndicator(predictSeries, series);
     DLDayOpenPriceIndicator dlDayOpenPriceIndicatior = new DLDayOpenPriceIndicator(dlDayBarPriceIndicator, series);
     DLDayClosePriceIndicator dlDayClosePriceIndicatior = new DLDayClosePriceIndicator(dlDayBarPriceIndicator, series);
 
@@ -47,9 +45,9 @@ public class DLStrategy {
     return new BaseStrategy(entryRule, exitRule);
   }
 
-  public static void printOutStrategy(MultiLayerNetwork net, StockDataSetIterator stockDataSetIterator, BarSeries series) {
+  public static void printOutStrategy(BarSeries predictSeries, BarSeries series) {
     // Building the trading strategy
-    Strategy strategy = buildStrategy(net, stockDataSetIterator, series);
+    Strategy strategy = buildStrategy(predictSeries, series);
 
     // Running the strategy
     BarSeriesManager seriesManager = new BarSeriesManager(series);

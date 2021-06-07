@@ -14,6 +14,7 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.ta4j.core.Bar;
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.BaseBar;
 import org.ta4j.core.BaseBarSeriesBuilder;
@@ -24,6 +25,7 @@ import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,6 +40,10 @@ public class StockPricePrediction {
   private static final Logger log = LoggerFactory.getLogger(StockPricePrediction.class);
 
   public static final int exampleLength = 66; // time series length, assume 66 working days in 3 months
+
+  private static INDArray[] predicts;
+  private static INDArray[] actuals;
+  private static BarSeries predictSeries;
 
   public static void main(String[] args) throws IOException {
     String ticker = System.getProperty("prices.ticker", "RI.RTSI");
@@ -71,11 +77,9 @@ public class StockPricePrediction {
       net = ModelSerializer.restoreMultiLayerNetwork(locationToSave);
       net.setListeners(new ScoreIterationListener(100));
       log.info("Testing...");
-      currentModelRating = getModelRating(net, test, max, min);
-      net.rnnClearPreviousState();
+      currentModelRating = getModelRating(net, iterator, max, min);
       if (Boolean.parseBoolean(System.getProperty("plot"))) {
-        predictAllCategories(net, iterator, multiLayerNetworkFileName);
-        net.rnnClearPreviousState();
+        predictAllCategories(iterator, multiLayerNetworkFileName);
       }
       if (Boolean.parseBoolean(System.getProperty("demoTrade"))) {
         StockDataReader stockDataReader = new StockDataReader("RI.RTSI.10");
@@ -100,7 +104,7 @@ public class StockPricePrediction {
                         ))
                         .collect(Collectors.toList()))
                 .build();
-        DLStrategy.printOutStrategy(net, iterator, barSeries);
+        DLStrategy.printOutStrategy(predictSeries, barSeries);
       }
     } else {
       log.info("Build lstm networks...");
@@ -114,7 +118,7 @@ public class StockPricePrediction {
         iterator.reset(); // reset iterator
         net.rnnClearPreviousState(); // clear previous state
         if (i % 16 == 0) {
-          ModelRating modelRating = getModelRating(net, test, max, min);
+          ModelRating modelRating = getModelRating(net, iterator, max, min);
           if (modelRating.getAverageAdjusted() > 4 || modelRating.getOverlapPercent() > 58 || modelRating.getAverageAdjusted() > currentModelRating.getAverageAdjusted()) {
             currentModelRating = modelRating;
             File saveTemp = new File(multiLayerNetworkFileName + ".rating" + modelRating.getFloorAverageAdjusted() + ".percent" + modelRating.getOverlapPercent() + "." + i + ".zip");
@@ -128,9 +132,11 @@ public class StockPricePrediction {
     log.info("Done...");
   }
 
-  private static ModelRating getModelRating(MultiLayerNetwork net, List<Pair<INDArray, INDArray>> testData, INDArray max, INDArray min) {
-    INDArray[] predicts = new INDArray[testData.size()];
-    INDArray[] actuals = new INDArray[testData.size()];
+  private static ModelRating getModelRating(MultiLayerNetwork net, StockDataSetIterator iterator, INDArray max, INDArray min) {
+    predicts = new INDArray[iterator.getTestDataSet().size()];
+    actuals = new INDArray[iterator.getTestDataSet().size()];
+
+    List<Bar> bars = new ArrayList();
 
     double totalRange = 0;
     double adjRange = 0;
@@ -142,9 +148,10 @@ public class StockPricePrediction {
     double actOpen;
     double actClose;
 
-    for (int i = 0; i < testData.size(); i++) {
-      predicts[i] = net.rnnTimeStep(testData.get(i).getKey()).getRow(exampleLength - 1).mul(max.sub(min)).add(min);
-      actuals[i] = testData.get(i).getValue();
+    for (int i = 0; i < iterator.getTestDataSet().size(); i++) {
+      predicts[i] = net.rnnTimeStep(iterator.getTestDataSet().get(i).getKey()).getRow(exampleLength - 1).mul(max.sub(min)).add(min);
+      actuals[i] = iterator.getTestDataSet().get(i).getValue();
+      net.rnnClearPreviousState();
 
       double offset = actuals[i].getDouble(0) - predicts[i].getDouble(0);
 
@@ -152,6 +159,15 @@ public class StockPricePrediction {
       adjClose = predicts[i].getDouble(1) + offset;
       actOpen = actuals[i].getDouble(0);
       actClose = actuals[i].getDouble(1);
+      bars.add(new BaseBar(
+              Duration.ofDays(1),
+              ZonedDateTime.ofLocal(iterator.getTestData().get(i).getDate(), ZoneId.systemDefault(), ZoneOffset.UTC),
+              adjOpen,
+              Math.max(adjOpen, adjClose),
+              Math.min(adjOpen, adjClose),
+              adjClose,
+              0
+      ));
 
       overlapRange = Math.max(adjOpen, adjClose) > Math.min(actOpen, actClose) && Math.min(adjOpen, adjClose) < Math.max(actOpen, actClose) ?
               Math.min(Math.max(adjOpen, adjClose), Math.max(actOpen, actClose)) -
@@ -163,10 +179,16 @@ public class StockPricePrediction {
       adjRange += Math.abs(adjOpen - adjClose);
       totalRange += Math.abs(actOpen - actClose);
     }
+    BaseBarSeriesBuilder barSeriesBuilder = new BaseBarSeriesBuilder();
+
+    predictSeries = barSeriesBuilder.withName("PREDICT")
+            .withBars(bars)
+            .build();
+
     double overlapAverage = Math.floor((overlapTotal / totalRange) * (overlapTotal / adjRange) * 100);
     ModelRating modelRating = new ModelRating();
-    modelRating.setOverlapPercent(((double) overlapTotalCount / testData.size()) * 100);
-    modelRating.setAverageAdjusted(overlapAverage * ((double) overlapTotalCount / testData.size()));
+    modelRating.setOverlapPercent(((double) overlapTotalCount / iterator.getTestData().size()) * 100);
+    modelRating.setAverageAdjusted(overlapAverage * ((double) overlapTotalCount / iterator.getTestData().size()));
     System.out.println("Overlap average: " + overlapAverage);
     System.out.println("Overlap overlapTotalCount: " + overlapTotalCount);
     System.out.println("Overlap overlapPercent: " + modelRating.getOverlapPercent());
@@ -177,15 +199,7 @@ public class StockPricePrediction {
   /**
    * Predict all the features (open, close, low, high prices and volume) of a stock one-day ahead
    */
-  private static void predictAllCategories(MultiLayerNetwork net, StockDataSetIterator iterator, String ticker) {
-    INDArray[] predicts = new INDArray[iterator.getTestDataSet().size()];
-    INDArray[] actuals = new INDArray[iterator.getTestDataSet().size()];
-    INDArray max = Nd4j.create(iterator.getMaxLabelArray());
-    INDArray min = Nd4j.create(iterator.getMinLabelArray());
-    for (int i = 0; i < iterator.getTestDataSet().size(); i++) {
-      predicts[i] = net.rnnTimeStep(iterator.getTestDataSet().get(i).getKey()).getRow(exampleLength - 1).mul(max.sub(min)).add(min);
-      actuals[i] = iterator.getTestDataSet().get(i).getValue();
-    }
+  private static void predictAllCategories(StockDataSetIterator iterator, String ticker) {
     log.info("Print out Predictions and Actual Values...");
     log.info("Predict\tActual");
     for (int i = 0; i < predicts.length; i++) log.info(predicts[i] + "\t" + actuals[i]);
