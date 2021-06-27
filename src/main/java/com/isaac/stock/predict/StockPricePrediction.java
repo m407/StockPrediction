@@ -117,13 +117,11 @@ public class StockPricePrediction {
         while (iterator.hasNext()) net.fit(iterator.next()); // fit model using mini-batch data
         iterator.reset(); // reset iterator
         net.rnnClearPreviousState(); // clear previous state
-        if (i % 16 == 0) {
-          ModelRating modelRating = getModelRating(net, iterator, max, min);
-          if (modelRating.getAverageAdjusted() > 4 || modelRating.getOverlapPercent() > 58 || modelRating.getAverageAdjusted() > currentModelRating.getAverageAdjusted()) {
-            currentModelRating = modelRating;
-            File saveTemp = new File(multiLayerNetworkFileName + ".rating" + modelRating.getFloorAverageAdjusted() + ".percent" + modelRating.getOverlapPercent() + "." + i + ".zip");
-            ModelSerializer.writeModel(net, saveTemp, true);
-          }
+        ModelRating modelRating = getModelRating(net, iterator, max, min);
+        if (modelRating.getAverageAdjusted() > 4 || modelRating.getOverlapPercent() > 58 || modelRating.getAverageAdjusted() > currentModelRating.getAverageAdjusted()) {
+          currentModelRating = modelRating;
+          File saveTemp = new File(multiLayerNetworkFileName + ".rating" + modelRating.getFloorAverageAdjusted() + ".percent" + modelRating.getOverlapPercent() + "." + i + ".zip");
+          ModelSerializer.writeModel(net, saveTemp, true);
         }
       }
       log.info("Saving model...");
