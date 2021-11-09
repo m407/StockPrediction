@@ -6,6 +6,8 @@ import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.DateAxis;
+import org.jfree.chart.plot.Marker;
+import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.ui.ApplicationFrame;
 import org.jfree.data.time.Day;
@@ -14,15 +16,15 @@ import org.jfree.data.time.Minute;
 import org.jfree.data.time.ohlc.OHLCSeries;
 import org.jfree.data.time.ohlc.OHLCSeriesCollection;
 import org.nd4j.linalg.api.ndarray.INDArray;
-import org.ta4j.core.Bar;
-import org.ta4j.core.BarSeries;
-import org.ta4j.core.Indicator;
+import org.ta4j.core.*;
 import org.ta4j.core.num.Num;
 
+import java.awt.*;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by zhanghao on 26/7/17.
@@ -67,7 +69,7 @@ public class PlotUtil {
     frame.setVisible(true);
   }
 
-  public static void plot(INDArray[] predicts, INDArray[] actuals, StockDataSetIterator iterator, String name) {
+  public static void plot(INDArray[] predicts, INDArray[] actuals, StockDataSetIterator iterator, String name, TradingRecord tradingRecord) {
     /*
      * Getting bar series
      */
@@ -147,6 +149,24 @@ public class PlotUtil {
     XYPlot plot = (XYPlot) jfreechart.getPlot();
     DateAxis axis = (DateAxis) plot.getDomainAxis();
     axis.setDateFormatOverride(new SimpleDateFormat("yyyy-MM-dd"));
+
+    List<Position> positionList = tradingRecord.getPositions();
+    // Adding markers to plot
+    for (Position position : positionList) {
+      // Buy signal
+      double buySignalTickTime = new Minute(Date.from(position.getEntry().getIndex()series.getTick(trade.getEntry().getIndex()).getEndTime().toInstant())).getFirstMillisecond();
+      Marker buyMarker = new ValueMarker(buySignalTickTime);
+      buyMarker.setPaint(Color.GREEN);
+      buyMarker.setLabel("B");
+      plot.addDomainMarker(buyMarker);
+      // Sell signal
+      double sellSignalTickTime = new Minute(Date.from(series.getTick(trade.getExit().getIndex()).getEndTime().toInstant())).getFirstMillisecond();
+      Marker sellMarker = new ValueMarker(sellSignalTickTime);
+      sellMarker.setPaint(Color.RED);
+      sellMarker.setLabel("S");
+      plot.addDomainMarker(sellMarker);
+    }
+
 
     /*
      * Displaying the chart

@@ -1,6 +1,5 @@
 package com.isaac.stock.strategy;
 
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.ta4j.core.Bar;
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.BaseBar;
@@ -12,7 +11,6 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
 public class DLDayBarPriceIndicator extends CachedIndicator<Bar> {
-  private MultiLayerNetwork net;
   private BarSeries predictSeries;
 
   public DLDayBarPriceIndicator(BarSeries predictSeries, BarSeries series) {

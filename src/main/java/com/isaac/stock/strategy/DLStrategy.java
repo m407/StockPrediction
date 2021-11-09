@@ -45,7 +45,7 @@ public class DLStrategy {
     return new BaseStrategy(entryRule, exitRule);
   }
 
-  public static void printOutStrategy(BarSeries predictSeries, BarSeries series) {
+  public static TradingRecord runStrategy(BarSeries predictSeries, BarSeries series) {
     // Building the trading strategy
     Strategy strategy = buildStrategy(predictSeries, series);
 
@@ -58,5 +58,6 @@ public class DLStrategy {
     System.out.println("Total return: " + totalReturn.calculate(series, tradingRecord));
     System.out.println("Total profit: " + grossProfit.calculate(series, tradingRecord));
     System.out.println("Number of trades for the strategy: " + tradingRecord.getPositions().size());
+    return tradingRecord;
   }
 }
