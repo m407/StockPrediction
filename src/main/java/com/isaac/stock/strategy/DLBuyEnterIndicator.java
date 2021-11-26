@@ -19,19 +19,13 @@ public class DLBuyEnterIndicator extends CachedIndicator<Num> {
   @Override
   protected Num calculate(int index) {
     Bar bar = dlDayBarPriceIndicator.getValue(index);
-    if (bar.getClosePrice().isGreaterThanOrEqual(bar.getOpenPrice()) &&
-            bar.getHighPrice().isGreaterThanOrEqual(bar.getClosePrice()) &&
-            bar.getHighPrice().isGreaterThanOrEqual(bar.getOpenPrice()) &&
-            bar.getLowPrice().isLessThanOrEqual(bar.getClosePrice()) &&
-            bar.getLowPrice().isLessThanOrEqual(bar.getOpenPrice())
-    ) {
+    if (bar.getClosePrice().isGreaterThanOrEqual(bar.getOpenPrice())) {
       return bar
-              .getLowPrice()
-              .minus(bar.getOpenPrice())
-              .multipliedBy(DoubleNum.valueOf(threshhold))
-              .multipliedBy(DoubleNum.valueOf(-1))
-              .plus(bar.getOpenPrice());
-
+              .getOpenPrice()
+              .minus(
+                      bar.getClosePrice()
+                              .minus(bar.getOpenPrice())
+                              .multipliedBy(DoubleNum.valueOf(threshhold)));
     } else {
       return DoubleNum.valueOf(Double.MIN_VALUE);
     }

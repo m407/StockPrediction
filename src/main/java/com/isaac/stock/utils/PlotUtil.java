@@ -69,7 +69,7 @@ public class PlotUtil {
     frame.setVisible(true);
   }
 
-  public static void plot(INDArray[] predicts, INDArray[] actuals, StockDataSetIterator iterator, String name, TradingRecord tradingRecord) {
+  public static void plot(INDArray[] predicts, INDArray[] actuals, StockDataSetIterator iterator, String name, TradingRecord tradingRecord, BarSeries barSeries) {
     /*
      * Getting bar series
      */
@@ -84,13 +84,14 @@ public class PlotUtil {
     stockDataReader
             .readAll()
             .stream()
+//            .filter(item -> (item.getDate().toLocalDate().isEqual(LocalDate.of(2021, 4, 26))))
             .filter(item -> (item.getDate().isAfter(startDate) ||
                     item.getDate().isEqual(startDate)) &&
                     (item.getDate().isBefore(endDate) ||
                             item.getDate().isEqual(endDate))
             )
             .forEachOrdered(item -> m10Series.add(
-                    new Minute(Date.from(item.getDate().toInstant(ZoneOffset.UTC))),
+                    new Minute(Date.from(item.getDate().toInstant(ZoneOffset.ofHours(3)))),
                     item.getData()[0],
                     item.getData()[1],
                     item.getData()[2],
@@ -154,13 +155,13 @@ public class PlotUtil {
     // Adding markers to plot
     for (Position position : positionList) {
       // Buy signal
-      double buySignalTickTime = new Minute(Date.from(position.getEntry().getIndex()series.getTick(trade.getEntry().getIndex()).getEndTime().toInstant())).getFirstMillisecond();
+      double buySignalTickTime = new Minute(Date.from(barSeries.getBar(position.getEntry().getIndex()).getEndTime().toInstant())).getFirstMillisecond();
       Marker buyMarker = new ValueMarker(buySignalTickTime);
       buyMarker.setPaint(Color.GREEN);
       buyMarker.setLabel("B");
       plot.addDomainMarker(buyMarker);
       // Sell signal
-      double sellSignalTickTime = new Minute(Date.from(series.getTick(trade.getExit().getIndex()).getEndTime().toInstant())).getFirstMillisecond();
+      double sellSignalTickTime = new Minute(Date.from(barSeries.getBar(position.getExit().getIndex()).getEndTime().toInstant())).getFirstMillisecond();
       Marker sellMarker = new ValueMarker(sellSignalTickTime);
       sellMarker.setPaint(Color.RED);
       sellMarker.setLabel("S");

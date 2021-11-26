@@ -41,6 +41,7 @@ public class StockPricePrediction {
   private static INDArray[] predicts;
   private static INDArray[] actuals;
   private static BarSeries predictSeries;
+  private static BarSeries barSeries;
   private static TradingRecord tradingRecord;
 
   public static void main(String[] args) throws IOException {
@@ -80,9 +81,10 @@ public class StockPricePrediction {
         StockDataReader stockDataReader = new StockDataReader("RI.RTSI.10");
         List<StockData> stockData = stockDataReader.readAll();
         BaseBarSeriesBuilder barSeriesBuilder = new BaseBarSeriesBuilder();
-        BarSeries barSeries = barSeriesBuilder
+        barSeries = barSeriesBuilder
                 .withName("RI.RTSI.10")
                 .withBars(stockData.stream()
+//                        .filter(item -> (item.getDate().toLocalDate().isEqual(LocalDate.of(2021, 4, 26))))
                         .filter(item -> (item.getDate().isAfter(iterator.getTestFirstDay()) ||
                                 item.getDate().isEqual(iterator.getTestFirstDay())) &&
                                 (item.getDate().isBefore(iterator.getTestLastDay()) ||
@@ -102,7 +104,7 @@ public class StockPricePrediction {
         tradingRecord = DLStrategy.runStrategy(predictSeries, barSeries);
       }
       if (Boolean.parseBoolean(System.getProperty("plot"))) {
-        plot(iterator, multiLayerNetworkFileName, tradingRecord);
+        plot(iterator, multiLayerNetworkFileName, tradingRecord, barSeries);
       }
     } else {
       log.info("Build lstm networks...");
@@ -195,12 +197,12 @@ public class StockPricePrediction {
   /**
    * Predict all the features (open, close, low, high prices and volume) of a stock one-day ahead
    */
-  private static void plot(StockDataSetIterator iterator, String ticker, TradingRecord tradingRecord) {
-    log.info("Print out Predictions and Actual Values...");
-    log.info("Predict\tActual");
-    for (int i = 0; i < predicts.length; i++) log.info(predicts[i] + "\t" + actuals[i]);
+  private static void plot(StockDataSetIterator iterator, String ticker, TradingRecord tradingRecord, BarSeries barSeries) {
+//    log.info("Print out Predictions and Actual Values...");
+//    log.info("Predict\tActual");
+//    for (int i = 0; i < predicts.length; i++) log.info(predicts[i] + "\t" + actuals[i]);
     log.info("Plot...");
-    PlotUtil.plot(predicts, actuals, iterator, ticker, tradingRecord);
+    PlotUtil.plot(predicts, actuals, iterator, ticker, tradingRecord, barSeries);
   }
 
 }
