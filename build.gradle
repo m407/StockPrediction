@@ -4,8 +4,8 @@
 
 plugins {
     id 'java'
-    id 'com.github.johnrengelman.shadow' version '6.1.0'
-    id 'org.openjfx.javafxplugin' version '0.0.9'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'org.openjfx.javafxplugin' version '0.0.14'
 }
 
 repositories {
@@ -21,22 +21,22 @@ dependencies {
     implementation 'org.deeplearning4j:deeplearning4j-core:0.9.1'
     implementation 'org.datavec:datavec-api:0.9.1'
     implementation 'org.datavec:datavec-dataframe:0.9.1'
-    implementation 'org.apache.spark:spark-sql_2.10:2.1.0'
-    implementation 'org.apache.spark:spark-mllib_2.10:2.1.0'
-    implementation 'org.apache.spark:spark-core_2.10:2.1.0'
-    implementation 'org.slf4j:slf4j-simple:1.7.21'
-    implementation 'org.jfree:jfreechart:1.5.3'
-    implementation 'com.google.guava:guava:23.0'
+    implementation 'org.apache.spark:spark-sql_2.10:2.2.3'
+    implementation 'org.apache.spark:spark-mllib_2.10:2.2.3'
+    implementation 'org.apache.spark:spark-core_2.10:2.2.3'
+    implementation 'org.slf4j:slf4j-simple:2.0.5'
+    implementation 'org.jfree:jfreechart:1.5.4'
+    implementation 'com.google.guava:guava:31.1-jre'
 //    implementation 'org.ta4j:ta4j-parent:0.13'
     implementation 'org.ta4j:ta4j-core:0.14'
-    implementation 'org.postgresql:postgresql:42.3.1'
+    implementation 'org.postgresql:postgresql:42.5.4'
 }
 
 group = 'com.isaac.stock'
 version = '1.0-SNAPSHOT'
 description = 'StockPrediction'
-java.sourceCompatibility = JavaVersion.VERSION_15
-java.targetCompatibility = JavaVersion.VERSION_15
+java.sourceCompatibility = JavaVersion.VERSION_17
+java.targetCompatibility = JavaVersion.VERSION_17
 
 jar {
     zip64=true
