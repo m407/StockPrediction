@@ -8,9 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StockDataReader {
-  private static final String user = "andrei";
-  private static final String pass = "";
-  private String connectionString = System.getProperty("prices.connection", "jdbc:postgresql://localhost:5432/stock_prices");
+  private static final String user = "stockdata";
+  private static final String pass = "stockdata";
+  private String connectionString = System.getProperty("prices.connection", "jdbc:postgresql://localhost:5432/stockdata");
   private String ticker;
   private Integer vectorSize;
 
@@ -28,7 +28,7 @@ public class StockDataReader {
   private void connect() {
     try {
       Class.forName("org.postgresql.Driver");
-      connection = DriverManager.getConnection(connectionString, "andrei", "");
+      connection = DriverManager.getConnection(connectionString, "stockdata", "stockdata");
       System.out.println("Successfully Connected.");
     } catch (Exception e) {
       System.err.println(e.getClass().getName() + ": " + e.getMessage());

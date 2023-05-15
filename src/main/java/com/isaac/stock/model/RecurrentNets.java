@@ -36,12 +36,11 @@ public class RecurrentNets {
   public static MultiLayerNetwork buildLstmNetworks(int nIn, int nOut) {
     MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
             .seed(seed)
-            .iterations(iterations)
-            .learningRate(learningRate)
+            .maxNumLineSearchIterations(iterations)
+            .weightInit(WeightInit.XAVIER)
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
             .weightInit(WeightInit.XAVIER)
-            .updater(Updater.RMSPROP)
-            .regularization(true)
+            .updater(Updater.RMSPROP.getIUpdaterWithDefaultConfig())
             .l2(1e-4)
             .list()
             .layer(0, new GravesLSTM.Builder()
@@ -72,8 +71,7 @@ public class RecurrentNets {
             .backpropType(BackpropType.TruncatedBPTT)
             .tBPTTForwardLength(truncatedBPTTLength)
             .tBPTTBackwardLength(truncatedBPTTLength)
-            .pretrain(false)
-            .backprop(true)
+            .backpropType(BackpropType.Standard)
             .build();
 
     MultiLayerNetwork net = new MultiLayerNetwork(conf);
