@@ -7,6 +7,8 @@ import com.isaac.stock.representation.StockDataSetIterator;
 import com.isaac.stock.strategy.DLStrategy;
 import com.isaac.stock.utils.PlotUtil;
 import javafx.util.Pair;
+import org.bytedeco.cuda.global.cudart;
+import org.bytedeco.javacpp.Loader;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
 import org.deeplearning4j.util.ModelSerializer;

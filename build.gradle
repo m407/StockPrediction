@@ -16,8 +16,10 @@ project.configurations.implementation.canBeResolved = true
 
 dependencies {
     implementation 'org.nd4j:nd4j-api:1.0.0-M2.1'
-    implementation 'org.nd4j:nd4j-native:1.0.0-M2.1'
-    implementation 'org.nd4j:nd4j-cuda-11.6-platform:1.0.0-M2.1'
+    implementation 'org.nd4j:nd4j-cuda-11.6:1.0.0-M2.1'
+    implementation 'org.nd4j:nd4j-cuda-11.6:1.0.0-M2.1:linux-x86_64'
+    implementation 'org.bytedeco:cuda:11.6-8.3-1.5.7'
+    implementation 'org.bytedeco:cuda:11.6-8.3-1.5.7:linux-x86_64'
     implementation 'org.deeplearning4j:deeplearning4j-core:1.0.0-M2.1'
     implementation 'org.datavec:datavec-api:0.9.1'
     implementation 'org.datavec:datavec-dataframe:0.9.1'
@@ -30,6 +32,8 @@ dependencies {
 //    implementation 'org.ta4j:ta4j-parent:0.13'
     implementation 'org.ta4j:ta4j-core:0.14'
     implementation 'org.postgresql:postgresql:42.5.4'
+    implementation 'org.slf4j:slf4j-api:2.0.7'
+    implementation 'org.slf4j:slf4j-simple:2.0.7'
 }
 
 group = 'com.isaac.stock'
